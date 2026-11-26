@@ -1,0 +1,196 @@
+{
+  "version": "onboarding-v1",
+  "revision": "onboarding-v1.1",
+  "questions": [
+    {
+      "id": "goodNewsSupport",
+      "version": 1,
+      "title": "When something goes well, what feels good to hear?",
+      "kind": "PREFERENCE",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "optional": true,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Ask me about the details",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Share my excitement",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Tell me they are proud of me",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Celebrate in a quiet way",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "It depends on the moment",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "feelingUnderstood",
+      "version": 1,
+      "title": "What helps you feel really understood?",
+      "kind": "PREFERENCE",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "optional": true,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Listen without rushing to a solution",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Ask thoughtful follow-up questions",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Reflect back what they heard",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Remember what matters to me",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Give me time to find the words",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "It depends on what I am sharing",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "conflictRepair",
+      "version": 1,
+      "title": "After a disagreement, what helps you reconnect?",
+      "kind": "PREFERENCE",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "optional": true,
+      "options": [
+        {
+          "id": "o01",
+          "label": "A clear apology and changed behavior",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Feeling that we understand each other",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Agreeing on a practical next step",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "A gentle moment of warmth",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Some space, then a check-in",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "I am still learning what helps",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "goalSupport",
+      "version": 1,
+      "title": "How would you want a partner to support your goals?",
+      "kind": "PREFERENCE",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "optional": true,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Encourage me and let me lead",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Be a sounding board when I ask",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Offer practical help when invited",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Celebrate progress along the way",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Give me room to focus",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "It depends on the goal",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    }
+  ]
+}

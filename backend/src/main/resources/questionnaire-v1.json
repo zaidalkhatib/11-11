@@ -1,0 +1,4115 @@
+{
+  "version": "onboarding-v1",
+  "questions": [
+    {
+      "id": "religion",
+      "version": 1,
+      "title": "What do you believe?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": true,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Christian",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Muslim",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Jewish",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Hindu",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Buddhist",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Sikh",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "Spiritual",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "Agnostic",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o09",
+          "label": "Atheist",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o10",
+          "label": "Another belief",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o11",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "faithImportance",
+      "version": 1,
+      "title": "How important is faith in your life?",
+      "kind": "IMPORTANCE",
+      "target": null,
+      "sensitive": true,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Not important",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "A small part",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Somewhat important",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Very important",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Central to my life",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "sharedFaith",
+      "version": 1,
+      "title": "Does sharing a belief matter?",
+      "kind": "PREFERENCE",
+      "target": "religion",
+      "sensitive": true,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Open to any belief",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Similar values matter more",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "I prefer a shared belief",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "A shared belief is essential",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "height",
+      "version": 1,
+      "title": "How tall are you?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "EXCLUDED",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "4′0″ / 122 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "4′1″ / 124 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "4′2″ / 127 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "4′3″ / 130 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "4′4″ / 132 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "4′5″ / 135 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "4′6″ / 137 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "4′7″ / 140 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o09",
+          "label": "4′8″ / 142 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o10",
+          "label": "4′9″ / 145 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o11",
+          "label": "4′10″ / 147 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o12",
+          "label": "4′11″ / 150 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o13",
+          "label": "5′0″ / 152 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o14",
+          "label": "5′1″ / 155 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o15",
+          "label": "5′2″ / 157 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o16",
+          "label": "5′3″ / 160 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o17",
+          "label": "5′4″ / 163 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o18",
+          "label": "5′5″ / 165 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o19",
+          "label": "5′6″ / 168 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o20",
+          "label": "5′7″ / 170 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o21",
+          "label": "5′8″ / 173 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o22",
+          "label": "5′9″ / 175 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o23",
+          "label": "5′10″ / 178 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o24",
+          "label": "5′11″ / 180 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o25",
+          "label": "6′0″ / 183 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o26",
+          "label": "6′1″ / 185 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o27",
+          "label": "6′2″ / 188 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o28",
+          "label": "6′3″ / 191 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o29",
+          "label": "6′4″ / 193 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o30",
+          "label": "6′5″ / 196 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o31",
+          "label": "6′6″ / 198 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o32",
+          "label": "6′7″ / 201 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o33",
+          "label": "6′8″ / 203 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o34",
+          "label": "6′9″ / 206 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o35",
+          "label": "6′10″ / 208 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o36",
+          "label": "6′11″ / 211 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o37",
+          "label": "7′0″ / 213 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o38",
+          "label": "7′1″ / 216 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o39",
+          "label": "7′2″ / 218 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o40",
+          "label": "7′3″ / 221 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o41",
+          "label": "7′4″ / 224 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o42",
+          "label": "7′5″ / 226 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o43",
+          "label": "7′6″ / 229 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o44",
+          "label": "7′7″ / 231 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o45",
+          "label": "7′8″ / 234 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o46",
+          "label": "7′9″ / 236 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o47",
+          "label": "7′10″ / 239 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o48",
+          "label": "7′11″ / 241 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o49",
+          "label": "8′0″ / 244 cm",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o50",
+          "label": "Outside this range",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o51",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "work",
+      "version": 1,
+      "title": "What fills your workday?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Technology",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Healthcare",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Education",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Business & finance",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Creative work",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Science & engineering",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "Law & public service",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "Hospitality & service",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o09",
+          "label": "Skilled trade",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o10",
+          "label": "Entrepreneur",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o11",
+          "label": "Student",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o12",
+          "label": "Between chapters",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o13",
+          "label": "Another field",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o14",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "adventure",
+      "version": 1,
+      "title": "Your appetite for adventure?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Familiar favorites",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Small new experiences",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "A mix of comfort and discovery",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Always trying something new",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "The bigger the adventure, the better",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "movies",
+      "version": 1,
+      "title": "What’s on movie night?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 3,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Comedy",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Romance",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Drama",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Thriller",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Horror",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Sci-fi & fantasy",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "Action",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "Documentaries",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o09",
+          "label": "Animation",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o10",
+          "label": "Not really a movie person",
+          "declined": false,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "music",
+      "version": 1,
+      "title": "What’s on your playlist?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 3,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Pop",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Hip-hop & rap",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "R&B & soul",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Rock & indie",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Electronic & dance",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Jazz & blues",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "Classical",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "Country & folk",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o09",
+          "label": "Latin",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o10",
+          "label": "Arabic",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o11",
+          "label": "A little of everything",
+          "declined": false,
+          "exclusive": true
+        },
+        {
+          "id": "o12",
+          "label": "I prefer quiet",
+          "declined": false,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "weekend",
+      "version": 1,
+      "title": "Your ideal free day?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 2,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Outdoors",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Friends and good food",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "A cultural escape",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "A cozy day at home",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Something spontaneous",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "A workout and a reset",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "selfRating",
+      "version": 1,
+      "title": "How would you rate your own looks?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "EXCLUDED",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "1",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "2",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "3",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "4",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "5",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "6",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "7",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "8",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o09",
+          "label": "9",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o10",
+          "label": "10",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o11",
+          "label": "I’d rather not rate myself",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "looksImportance",
+      "version": 1,
+      "title": "How much do looks matter to you?",
+      "kind": "IMPORTANCE",
+      "target": null,
+      "sensitive": false,
+      "scoring": "EXCLUDED",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Personality comes first",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "A little",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Personality and looks equally",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Physical attraction matters a lot",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "An initial spark is essential",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "relationship",
+      "version": 1,
+      "title": "What are you looking for?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "A life partner",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "A serious relationship",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Dating with intention",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Something casual",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Exploring what feels right",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "communication",
+      "version": 1,
+      "title": "When something feels off, you…",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Talk it through right away",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Take time, then talk",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Prefer a gentle check-in",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Find it easier to write first",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "affection",
+      "version": 1,
+      "title": "How do you show you care?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 2,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Quality time",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Thoughtful words",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Small acts of care",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Physical affection",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Thoughtful gifts",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "pace",
+      "version": 1,
+      "title": "What pace feels good?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "A slow build",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Let it unfold naturally",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "I’m intentional from the start",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Follow the spark",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "gender",
+      "version": 1,
+      "title": "How do you describe your gender?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Male",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Female",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Non-binary",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Another identity",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Questioning",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "interestedIn",
+      "version": 1,
+      "title": "Who would you like to meet?",
+      "kind": "PREFERENCE",
+      "target": "gender",
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Men",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Women",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Non-binary people",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "People of any gender",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Still exploring",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "planning",
+      "version": 1,
+      "title": "A plan or a little spontaneity?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "I love a detailed plan",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "A loose plan feels right",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "I like to decide in the moment",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "It depends on the day",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "humor",
+      "version": 1,
+      "title": "What makes you laugh?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 2,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Playful banter",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Dry wit",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Silly, absurd moments",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Clever wordplay",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Relatable everyday stories",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Gentle, wholesome humor",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "decisions",
+      "version": 1,
+      "title": "When making a big decision, you…",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Think through the facts",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Trust my intuition",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Talk it out with someone",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Balance my head and heart",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "support",
+      "version": 1,
+      "title": "After a hard day, what helps most?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Someone who listens",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Help finding a solution",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "A comforting hug",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "A little space first",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "A lighthearted distraction",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "differences",
+      "version": 1,
+      "title": "When you see things differently, you…",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Get curious about their perspective",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Enjoy a respectful debate",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Look for common ground",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Agree to disagree",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "values",
+      "version": 1,
+      "title": "What do you value most in a partner?",
+      "kind": "PREFERENCE",
+      "target": "partnerTraits",
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 3,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Kindness",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Honesty",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Curiosity",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Reliability",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Ambition",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Emotional openness",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "Independence",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "Generosity",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o09",
+          "label": "Family connection",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "ambition",
+      "version": 1,
+      "title": "What does ambition look like for you?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 2,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Growing in my career",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Creating something of my own",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Learning and personal growth",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Building a balanced life",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Making a difference for others",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "independence",
+      "version": 1,
+      "title": "Together time and your own space?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Lots of shared time",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "A close bond with regular solo time",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Plenty of independence",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Find a rhythm together",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "children",
+      "version": 1,
+      "title": "How do children fit into your future?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "I want children",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "I may want children",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "I do not want children",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "I have children and am open to more",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "I have children and do not want more",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Still figuring it out",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "newExperiences",
+      "version": 1,
+      "title": "When you’re new at something, you…",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Jump in and learn by doing",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Observe before trying",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Ask someone to show me",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Research and prepare first",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "bodyBuild",
+      "version": 1,
+      "title": "How would you describe your build?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "EXCLUDED",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Slim",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Average",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Athletic",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Muscular",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Curvy",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Larger build",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "Another description",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "workout",
+      "version": 1,
+      "title": "How often do you like to work out?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Rarely or never",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Once or twice a week",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Three or four times a week",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Most days",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "It varies",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "movement",
+      "version": 1,
+      "title": "What kind of movement do you enjoy?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 3,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Walking",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Hiking",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Running",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Strength training",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Yoga or Pilates",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Dancing",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "Team sports",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "Swimming",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o09",
+          "label": "Cycling",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o10",
+          "label": "Gentle movement",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o11",
+          "label": "Not a focus for me",
+          "declined": false,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "sharedActivity",
+      "version": 1,
+      "title": "How important is an active partner?",
+      "kind": "PREFERENCE",
+      "target": "workout",
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Shared workouts matter to me",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Some shared activity would be nice",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Different routines are fine",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "It is not important to me",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "ethnicity",
+      "version": 1,
+      "title": "How do you describe your ethnic background?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": true,
+      "scoring": "INACTIVE",
+      "maximum": 3,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Black or African heritage",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "East Asian",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "South Asian",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Southeast Asian",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Middle Eastern or North African",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Hispanic or Latino",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "White or European heritage",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "Indigenous or Native heritage",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o09",
+          "label": "Pacific Islander",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o10",
+          "label": "Mixed heritage",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o11",
+          "label": "Another background",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o12",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "sharedBackground",
+      "version": 1,
+      "title": "Does a shared ethnic background matter to you?",
+      "kind": "PREFERENCE",
+      "target": "ethnicity",
+      "sensitive": true,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Open to any ethnic background",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Shared culture matters more than ethnicity",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "I prefer a shared ethnic background",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "A shared ethnic background is important to me",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "routine",
+      "version": 1,
+      "title": "What rhythm suits you best?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Early mornings",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Late nights",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "A regular balanced routine",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Flexible and changing",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "stress",
+      "version": 1,
+      "title": "When life gets busy, you recharge by…",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 2,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Quiet time alone",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Seeing people I trust",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Moving my body",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Making or creating something",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Getting organized",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "affectionStyle",
+      "version": 1,
+      "title": "How openly do you show affection?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Warm and expressive",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Mostly in private",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Through actions more than words",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Gradually as trust grows",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "familyTime",
+      "version": 1,
+      "title": "How does family fit into your everyday life?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "A big part of daily life",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Regular time together matters",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Close, with plenty of independence",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Chosen family is my focus",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "It is complicated",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "languages",
+      "version": 1,
+      "title": "Which languages feel like home?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 4,
+      "options": [
+        {
+          "id": "o01",
+          "label": "English",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Arabic",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Spanish",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "French",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Mandarin",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Cantonese",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "Hindi",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "Urdu",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o09",
+          "label": "Portuguese",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o10",
+          "label": "German",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o11",
+          "label": "Korean",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o12",
+          "label": "Japanese",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o13",
+          "label": "Tagalog",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o14",
+          "label": "Vietnamese",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o15",
+          "label": "ASL",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o16",
+          "label": "Another language",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o17",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "siblings",
+      "version": 1,
+      "title": "Where do you fit among your siblings?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Oldest",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Middle",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Youngest",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Only child",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "A blended family",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "It is a little more complicated",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "upbringing",
+      "version": 1,
+      "title": "What kind of place shaped you?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "A big city",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "The suburbs",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "A small town",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "The countryside",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Several very different places",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "movingRoots",
+      "version": 1,
+      "title": "How has moving shaped your story?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "I live near where I grew up",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "I moved within my home country",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "I moved to a new country",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "My family moved before I was born",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "I grew up across countries",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "childhoodResources",
+      "version": 1,
+      "title": "Growing up, money felt…",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "EXCLUDED",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Often tight",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Enough for the essentials",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Generally comfortable",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Very comfortable",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Different at different times",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "relationshipStatus",
+      "version": 1,
+      "title": "What chapter are you in right now?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Single",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Divorced",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Widowed",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Separated",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "In an ethically non-monogamous relationship",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Figuring out my next chapter",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "orientation",
+      "version": 1,
+      "title": "How do you describe your orientation?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": true,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Straight",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Gay",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Lesbian",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Bisexual",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Pansexual",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Queer",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "Asexual",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "Questioning",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o09",
+          "label": "Another identity",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o10",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "thinkingStrength",
+      "version": 1,
+      "title": "Where does your mind feel most at home?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 2,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Patterns and numbers",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Words and ideas",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Reading people",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Practical problem-solving",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Creative possibilities",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "A mix of these",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "practicalConfidence",
+      "version": 1,
+      "title": "In an unfamiliar everyday situation, you…",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Usually find my own way",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Ask good questions",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Watch and learn first",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Call someone I trust",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "trust",
+      "version": 1,
+      "title": "How does trust usually grow for you?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "I start with an open heart",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "I open up a little at a time",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Consistency earns my trust",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "It depends on the person",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "composure",
+      "version": 1,
+      "title": "When plans unravel, your first instinct is…",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Stay calm and adapt",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Talk it through",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Take a moment to reset",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Start finding a new plan",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "imagination",
+      "version": 1,
+      "title": "How often do you get lost in possibilities?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Rarely",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Now and then",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Often",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "My mind is always imagining",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "feedback",
+      "version": 1,
+      "title": "When someone makes a mistake, you tend to…",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Look for the context",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Offer a practical suggestion",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Speak honestly but gently",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Give them room to work it out",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "followThrough",
+      "version": 1,
+      "title": "When motivation fades, what helps you finish?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "A steady routine",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "A clear deadline",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Someone alongside me",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Remembering why I started",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "A break and a fresh start",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "hardConversations",
+      "version": 1,
+      "title": "How do you approach a conversation you would rather avoid?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Name it gently and start",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Prepare my thoughts first",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Ask for the right time",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "I sometimes need encouragement",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "groupRole",
+      "version": 1,
+      "title": "In a group conversation, you usually…",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Keep the conversation moving",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Listen and join when something clicks",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Draw quieter people in",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Switch roles with the group",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "podcasts",
+      "version": 1,
+      "title": "What would you queue for a long walk?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 3,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Comedy and conversation",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Science and discovery",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Culture and storytelling",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "News and current affairs",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Business and ideas",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Relationships and wellbeing",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "True crime",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "Music instead",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o09",
+          "label": "Nothing, just the world around me",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "socialSetting",
+      "version": 1,
+      "title": "What kind of setting brings you to life?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "A quiet corner",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "A small lively table",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "A buzzing room",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "A dance floor",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "It depends on my mood",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "pets",
+      "version": 1,
+      "title": "Which animals would you happily share life with?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 3,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Dogs",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Cats",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Small pets",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Birds",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Horses",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Reptiles",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "No pets for me",
+          "declined": false,
+          "exclusive": true
+        },
+        {
+          "id": "o08",
+          "label": "Open to discovering",
+          "declined": false,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "socialMedia",
+      "version": 1,
+      "title": "What place does social media have in your day?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Barely any",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "A quick check-in",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "A way to keep in touch",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "A creative outlet",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "A regular part of my day",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "phonesAtDinner",
+      "version": 1,
+      "title": "Phones at a table for two?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Put away and be present",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "A quick necessary check is fine",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Sharing things on screen can be fun",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "I am easygoing about it",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "humorBoundaries",
+      "version": 1,
+      "title": "How do you feel about humor that pushes boundaries?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "I enjoy a little edge",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Context and kindness matter most",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "I prefer humor that does not target people",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "It depends on the topic",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "purpose",
+      "version": 1,
+      "title": "Where do you think a sense of purpose comes from?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Something we discover",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Something we create",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "The people we care for",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "A spiritual calling",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "I am still exploring",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "astrology",
+      "version": 1,
+      "title": "What is your relationship with astrology?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Meaningful to me",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "A fun conversation starter",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Curious, but skeptical",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Not my thing",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "communityAction",
+      "version": 1,
+      "title": "How do you like to contribute to your community?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 2,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Hands-on volunteering",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Speaking up for causes",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Helping people close to me",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Supporting from behind the scenes",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Still finding my way",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "politicalOutlook",
+      "version": 1,
+      "title": "How would you describe your political outlook?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": true,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Left-leaning",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Center-left",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Centrist",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Center-right",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Right-leaning",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Independent or mixed",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "Not politically engaged",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "politicalFit",
+      "version": 1,
+      "title": "How much do shared political views matter in a relationship?",
+      "kind": "PREFERENCE",
+      "target": "politicalOutlook",
+      "sensitive": true,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Very important",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Some common ground matters",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Respectful differences are welcome",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Politics is not central for me",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "newsConversation",
+      "version": 1,
+      "title": "Current events on a first date?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "I love a thoughtful discussion",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "A little is welcome",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Maybe once we know each other",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "I prefer other topics",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "sustainability",
+      "version": 1,
+      "title": "How does caring for the planet shape your choices?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "It guides many of my decisions",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "I make changes where I can",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "I am learning what works for me",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "It is not a main focus",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "reproductiveValues",
+      "version": 1,
+      "title": "How important is agreement on reproductive choices?",
+      "kind": "IMPORTANCE",
+      "target": null,
+      "sensitive": true,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Essential to me",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Important to discuss early",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Open to a thoughtful conversation",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "styleSpending",
+      "version": 1,
+      "title": "What draws you to something you buy?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 2,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Quality that lasts",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "A beautiful design",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "A recognizable brand",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "A good value",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "An ethical choice",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "A meaningful story",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "rules",
+      "version": 1,
+      "title": "When a rule does not make sense to you, you…",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Follow it unless there is a good reason not to",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Ask why it exists",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Look for a better way",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Decide based on the situation",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "changeComfort",
+      "version": 1,
+      "title": "A familiar life or a fresh chapter?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "I value a steady foundation",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Small changes keep life interesting",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "I welcome a new direction",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "I like a balance of both",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "individuality",
+      "version": 1,
+      "title": "How important is doing things your own way?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Very important",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Important when it matters",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "I balance my wishes with others",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Shared traditions often guide me",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "moneyValues",
+      "version": 1,
+      "title": "What does financial wellbeing mean to you?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 2,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Security and peace of mind",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Freedom to choose",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Enjoying experiences",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Building something lasting",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Being able to help others",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "relationshipStructure",
+      "version": 1,
+      "title": "What kind of relationship fits you?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Monogamous",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Ethically non-monogamous",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Open to discussing it",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Still exploring",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "childrenAlignment",
+      "version": 1,
+      "title": "How closely should your family plans align?",
+      "kind": "PREFERENCE",
+      "target": "familyPlans",
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "We need to want the same future",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Some flexibility, with an honest conversation",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "I am still figuring this out",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "smokingFit",
+      "version": 1,
+      "title": "How do you feel about a partner smoking or vaping?",
+      "kind": "PREFERENCE",
+      "target": "smoking",
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "I need a smoke-free and vape-free partner",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Occasional use would be okay",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "No strong preference",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "drinkingFit",
+      "version": 1,
+      "title": "What would feel right around alcohol?",
+      "kind": "PREFERENCE",
+      "target": "drinking",
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "I want an alcohol-free partner",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Occasional drinking is fine",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Regular social drinking is fine",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "No strong preference",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "distanceFit",
+      "version": 1,
+      "title": "How far could a connection take you?",
+      "kind": "PREFERENCE",
+      "target": "location",
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Someone local only",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Nearby, with some travel",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Open to long distance",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Open to relocating eventually",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Still figuring it out",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "partnerEnergy",
+      "version": 1,
+      "title": "What social energy draws you in?",
+      "kind": "PREFERENCE",
+      "target": "energy",
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Quiet and reflective",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Outgoing and social",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "A balance of both",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Different from mine could be good",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "No strong preference",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "energy",
+      "version": 1,
+      "title": "energy",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "1",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "2",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "3",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "4",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "5",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "conversations",
+      "version": 1,
+      "title": "conversations",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 3,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Big ideas",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Music & culture",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Travel stories",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Everyday things",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Food",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "What makes us, us",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "chemistry",
+      "version": 1,
+      "title": "chemistry",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Easy laughter",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "A different perspective",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Feeling understood",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "A little spontaneity",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "11:11 Preview",
+    "slug": "eleven-eleven-preview",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#21151f",
+    "ios": {
+      "supportsTablet": true
+    },
+    "web": {
+      "name": "11:11 \u00b7 A first hello",
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": ["expo-router"],
+    "scheme": "elevenelevenpreview"
+  }
+}
