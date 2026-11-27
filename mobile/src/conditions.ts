@@ -20,11 +20,11 @@ export type ConditionCheckbox = {
   docId?: ConditionDocId;
 };
 
-const COMPANY = "[FULL LEGAL COMPANY NAME]";
-const WEBSITE = "[WEBSITE URL]";
-const ADDRESS = "[COMPANY ADDRESS]";
-const CANCEL_EMAIL = "[CANCELLATION EMAIL]";
-const SUPPORT_EMAIL = "[SUPPORT EMAIL]";
+const COMPANY = "11:11 Dates";
+const WEBSITE = "https://11-11-if169chxh-zaid-alkhatibs-projects.vercel.app/";
+const ADDRESS = "6439 Reflection Drive, Apt 207, San Diego, CA 92124";
+const CANCEL_EMAIL = "1111datesapp@gmail.com";
+const SUPPORT_EMAIL = "1111datesapp@gmail.com";
 const EFFECTIVE = "November 26, 2026";
 
 export const conditionDocuments: ConditionDoc[] = [

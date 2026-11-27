@@ -369,8 +369,12 @@ export function DateHome({
               reduce={reduce}
               onComplete={() => {
                 const id = selected.id;
+                // D-028: no client-side match fallback — join only via API; match comes from server.
                 if (!useApi) {
-                  finishJoin(id, true);
+                  Alert.alert(
+                    "Not connected",
+                    "Dinner join needs a live connection. Check your network and try again.",
+                  );
                   return;
                 }
                 void joinEvent(id)
@@ -417,9 +421,6 @@ export function ActiveInvite({
   const [confirmLeave, setConfirmLeave] = useState(false);
   const opacity = useRef(new Animated.Value(reveal && open ? 1 : 0)).current;
   const shift = useRef(new Animated.Value(reveal && open ? 0 : 18)).current;
-  const coverOpacity = useRef(new Animated.Value(1)).current;
-  const coverShift = useRef(new Animated.Value(0)).current;
-  const confirmPulse = useRef(new Animated.Value(matched ? 1 : 0.92)).current;
   const wasMatched = useRef(matched);
 
   useEffect(() => {
@@ -427,30 +428,7 @@ export function ActiveInvite({
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     }
     wasMatched.current = matched;
-    if (!matched || reduce) {
-      confirmPulse.setValue(1);
-      return;
-    }
-    confirmPulse.setValue(0.94);
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(confirmPulse, {
-          toValue: 1,
-          duration: 900,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(confirmPulse, {
-          toValue: 0.96,
-          duration: 900,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [matched, reduce, confirmPulse]);
+  }, [matched]);
 
   useEffect(() => {
     if (!open) return;
@@ -482,42 +460,9 @@ export function ActiveInvite({
     ]).start();
   }, [open, reveal, reduce, opacity, shift, plan.itineraryId]);
 
-  useEffect(() => {
-    if (open) return;
-    if (reduce) {
-      coverOpacity.setValue(1);
-      coverShift.setValue(0);
-      return;
-    }
-    coverOpacity.setValue(0);
-    coverShift.setValue(14);
-    Animated.parallel([
-      Animated.timing(coverOpacity, {
-        toValue: 1,
-        duration: 280,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.timing(coverShift, {
-        toValue: 0,
-        duration: 280,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [open, reduce, coverOpacity, coverShift, plan.itineraryId]);
-
   if (!open) {
     return (
-      <Animated.View
-        style={[
-          inv.coverWrapList,
-          {
-            opacity: coverOpacity,
-            transform: [{ translateY: coverShift }],
-          },
-        ]}
-      >
+      <View style={inv.coverWrapList}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Open ${plan.type} invitation`}
@@ -528,42 +473,31 @@ export function ActiveInvite({
             <Text style={inv.coverTitle}>{title === "Dinner" ? dinnerTitle.replace(" in ", " in\n") : title}</Text>
             <Text style={inv.coverMeta}>{when}</Text>
             <View style={inv.coverPill}>
-              <View style={inv.curatorDot} />
               <Text style={inv.curatorText}>
-                Arranged by <Text style={inv.curatorEm}>11:11</Text>
+                arranged by <Text style={inv.curatorEm}>11:11</Text>
+                <Text style={inv.curatorSpark}> ✧</Text>
               </Text>
               <Text style={inv.coverChevron}>›</Text>
             </View>
           </View>
-          <Animated.View
-            style={[
-              inv.coverFooter,
-              matched && inv.coverFooterConfirmed,
-              matched && { transform: [{ scale: confirmPulse }] },
-            ]}
-          >
+          <View style={inv.coverFooter}>
             {matched ? (
-              <>
-                <View style={inv.coverConfirmMark} accessible={false}>
-                  <Text style={inv.coverConfirmCheck}>✓</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={inv.coverFooterEyebrow}>It’s a match</Text>
-                  <Text style={inv.coverFooterTextConfirmed}>Confirmed with your match</Text>
-                </View>
-              </>
+              <View style={inv.coverMatchCluster} accessible={false}>
+                <View style={[inv.coverMatchFace, inv.coverMatchFaceAccent, { zIndex: 2 }]} />
+                <View style={[inv.coverMatchFace, inv.coverMatchFaceAccent, inv.coverMatchOverlap]} />
+              </View>
             ) : (
-              <>
-                <View style={inv.coverMatchCluster} accessible={false}>
-                  <View style={[inv.coverMatchFace, { zIndex: 2 }]} />
-                  <View style={[inv.coverMatchFace, inv.coverMatchOverlap]} />
-                </View>
-                <Text style={inv.coverFooterText}>Waiting to be matched</Text>
-              </>
+              <View style={inv.coverMatchCluster} accessible={false}>
+                <View style={[inv.coverMatchFace, { zIndex: 2 }]} />
+                <View style={[inv.coverMatchFace, inv.coverMatchOverlap]} />
+              </View>
             )}
-          </Animated.View>
+            <Text style={[inv.coverFooterText, matched && inv.coverFooterTextMatched]}>
+              {matched ? "matched with your date" : "waiting to be matched"}
+            </Text>
+          </View>
         </Pressable>
-      </Animated.View>
+      </View>
     );
   }
 
@@ -589,9 +523,9 @@ export function ActiveInvite({
             onPress={() => onOpenChange(false)}
             style={inv.curator}
           >
-            <View style={inv.curatorDot} />
             <Text style={inv.curatorText}>
-              Arranged by <Text style={inv.curatorEm}>11:11</Text>
+              arranged by <Text style={inv.curatorEm}>11:11</Text>
+              <Text style={inv.curatorSpark}> ✧</Text>
             </Text>
             <Text style={inv.coverChevron}>‹</Text>
           </Pressable>
@@ -634,11 +568,9 @@ export function ActiveInvite({
                 </View>
                 <Text style={inv.personName}>Your match</Text>
                 {matched ? (
-                  <View style={inv.matchConfirmedPill}>
-                    <Text style={inv.matchConfirmedText}>Confirmed ✓</Text>
-                  </View>
+                  <Text style={inv.matchConfirmedText}>matched</Text>
                 ) : (
-                  <Text style={inv.matchHint}>Waiting</Text>
+                  <Text style={inv.matchHint}>finding</Text>
                 )}
               </View>
             </View>
@@ -863,12 +795,13 @@ const inv = StyleSheet.create({
     marginTop: 22,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
     borderWidth: 1,
     borderColor: color.line,
     borderRadius: 999,
     paddingVertical: 11,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
+    backgroundColor: color.background,
   },
   coverChevron: { color: color.muted, fontSize: 18, marginLeft: 2 },
   coverFooter: {
@@ -879,50 +812,15 @@ const inv = StyleSheet.create({
     alignSelf: "stretch",
     paddingVertical: 4,
   },
-  coverFooterConfirmed: {
-    justifyContent: "flex-start",
-    gap: 12,
-    borderWidth: 1,
-    borderColor: color.accent,
-    backgroundColor: "#d7a98a22",
-    borderRadius: 18,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-  },
   coverFooterText: {
     color: color.muted,
     fontFamily: serif,
     fontStyle: "italic",
     fontSize: 14,
-  },
-  coverFooterEyebrow: {
-    color: color.accent,
-    fontFamily: sans,
-    fontSize: 10,
-    letterSpacing: 1.6,
-    textTransform: "uppercase",
-    marginBottom: 2,
-  },
-  coverFooterTextConfirmed: {
-    color: color.ink,
-    fontFamily: serif,
-    fontSize: 15,
     letterSpacing: -0.2,
   },
-  coverConfirmMark: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: color.accent,
-  },
-  coverConfirmCheck: {
-    color: color.background,
-    fontFamily: sans,
-    fontSize: 15,
-    fontWeight: "700",
-    marginTop: -1,
+  coverFooterTextMatched: {
+    color: color.accent,
   },
   coverMatchCluster: { flexDirection: "row", width: 34, marginRight: 2 },
   coverMatchFace: {
@@ -932,6 +830,10 @@ const inv = StyleSheet.create({
     backgroundColor: "#5a4450",
     borderWidth: 1,
     borderColor: color.line,
+  },
+  coverMatchFaceAccent: {
+    backgroundColor: "#8a6a58",
+    borderColor: color.accent,
   },
   coverMatchOverlap: { marginLeft: -8, opacity: 0.55 },
   scrollView: { flex: 1 },
@@ -956,29 +858,22 @@ const inv = StyleSheet.create({
   curator: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
     borderWidth: 1,
     borderColor: color.line,
     borderRadius: 999,
     paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  curatorDot: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 1,
-    borderColor: color.accent,
-    backgroundColor: color.surfaceRaised,
+    paddingHorizontal: 16,
+    backgroundColor: color.background,
   },
   curatorText: {
     color: color.muted,
-    fontFamily: sans,
-    fontSize: 11,
-    letterSpacing: 1.6,
-    textTransform: "uppercase",
+    fontFamily: serif,
+    fontSize: 14,
+    letterSpacing: -0.2,
   },
-  curatorEm: { color: color.ink, fontFamily: serif, fontStyle: "italic", textTransform: "none", letterSpacing: 0 },
+  curatorEm: { color: color.ink, fontFamily: serif, fontStyle: "italic" },
+  curatorSpark: { color: color.accent, fontFamily: serif, fontSize: 11 },
   sectionTitle: {
     fontFamily: serif,
     fontSize: 28,
@@ -1055,19 +950,12 @@ const inv = StyleSheet.create({
   statusText: { color: color.muted, fontFamily: serif, fontSize: 14, },
   statusIcon: { color: color.accent, fontSize: 12 },
   matchHint: { color: color.muted, fontFamily: serif, fontStyle: "italic", fontSize: 14 },
-  matchConfirmedPill: {
-    borderWidth: 1,
-    borderColor: color.accent,
-    backgroundColor: "#d7a98a28",
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
   matchConfirmedText: {
     color: color.accent,
-    fontFamily: sans,
-    fontSize: 12,
-    letterSpacing: 0.4,
+    fontFamily: serif,
+    fontStyle: "italic",
+    fontSize: 14,
+    letterSpacing: -0.2,
   },
   noteCard: {
     marginLeft: 22,

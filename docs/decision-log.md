@@ -231,6 +231,18 @@ At the 2026-10-24 organization baseline, no product, technology, commercial, or 
 - Related workstreams: Engineering, Design.
 - Dependencies and follow-up: production phone auth/OIDC; restore full answer snapshot on login (currently name + server interests).
 
+### D-028 — Production matching, notifications, payments, website scope
+
+- Status: **Approved**, 2026-11-26.
+- Decision:
+  1. **Matching in production has no client fallback.** A match is only server truth (same event + reciprocal score + allocator). The app must not invent `demoMatched` when the API is down or offline.
+  2. **Push notifications are in scope:** notify when matched, plus dinner/event reminders.
+  3. **Payments / membership checkout deferred** (legal copy may remain; no processor yet).
+  4. **Website stays marketing/signup-preview for now**; remaining production work focuses on mobile + API (auth, Railway/Postgres, matching, notifications). App Store listing later.
+- Source and approver: user, 2026-11-26 production-readiness thread: “Matching in prod no fallback”; “yes we need your matched notification and reminders”; “payment later”; “we already have a website we can do the rest later.”
+- Related questions and workstreams: Q-04–Q-07, Q-05; Engineering, Growth & Experiences.
+- Dependencies and follow-up: remove offline fake-match path; Expo push token + backend outbox/dispatcher; Firebase phone auth + Railway Postgres (separate). Builds on D-025 / D-026.
+
 ## New-entry template
 
 ### D-XXX — Short title

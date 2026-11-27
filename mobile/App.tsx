@@ -45,6 +45,7 @@ import {
   isComplete,
   isStepValid,
   usPhoneWarning,
+  formatUsPhoneInput,
   PHOTO_STEP,
   TRAIT_OFFSET,
   cityOptions,
@@ -69,12 +70,16 @@ import {
 import {
   clearSession,
   createProfileAndAnswers,
+  ensureFirebaseSession,
   fetchDinnerEvents,
   fetchInvitations,
   leaveEvent,
   triggerMatcher,
   tryReturningLogin,
 } from "./src/api";
+import { confirmPhoneCode, sendPhoneCode } from "./src/auth";
+import { getFirebaseWebConfig, isFirebaseConfigured } from "./src/firebase";
+import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 
 type InviteEntranceState = { itineraryId: string; title: string; meta: string };
 type HomeTab = "Events" | "Invites" | "You";
@@ -195,7 +200,7 @@ const questions = [
   { label: "YOUR NUMBER", title: "What’s your number?", helper: "We’ll use this to sign you in next time. Enter a valid US phone number." },
   { label: "A FIRST HELLO", title: "What should we call you?", helper: "A first name or nickname is perfect." },
   { label: "YOUR CITY", title: "Where are you based?", helper: "The place you call home right now." },
-  { label: "CODE PREVIEW", title: "A little confirmation.", helper: "In the finished app, you would enter a text-message code here. If you already have an account, we’ll bring you back in. No code has been sent yet." },
+  { label: "CONFIRMATION", title: "Enter the code we sent.", helper: "Use the 6-digit code from your text. Test numbers use the code you set in Firebase." },
   { label: "YOUR SOCIAL RHYTHM", title: "Around someone new, you tend to…", helper: "Think about your natural rhythm before you feel completely at ease." },
   { label: "THE GOOD CONVERSATIONS", title: "What makes you lose track of time?", helper: "The topics you could happily talk about for hours. Pick two or three." },
   { label: "A LITTLE CHEMISTRY", title: "What draws you closer?", helper: "Think about the feeling that makes you want a second date." },
@@ -419,6 +424,9 @@ function Choice({
     </Pressable>
   );
 }
+/** Last intro line starts at this delay; CTA waits until that reveal finishes. */
+const INTRO_FOOT_DELAY_MS = 2450;
+
 function Intro({
   index,
   next,
@@ -432,6 +440,18 @@ function Intro({
 }) {
   const page = intros[index];
   const compact = useWindowDimensions().width < 350;
+  const [ctaReady, setCtaReady] = useState(reduce);
+
+  useEffect(() => {
+    if (reduce) {
+      setCtaReady(true);
+      return;
+    }
+    setCtaReady(false);
+    const timer = setTimeout(() => setCtaReady(true), INTRO_FOOT_DELAY_MS + motion.reveal);
+    return () => clearTimeout(timer);
+  }, [index, reduce]);
+
   return (
     <>
       <ScreenHeader onBack={back} showBack={index > 0} smallBrand={false} />
@@ -472,7 +492,7 @@ function Intro({
               {page.body}
             </Text>
           </Reveal>
-          <Reveal delay={2450} reduce={reduce}>
+          <Reveal delay={INTRO_FOOT_DELAY_MS} reduce={reduce}>
             <Text style={s.introFoot}>{page.foot}</Text>
           </Reveal>
         </View>
@@ -486,16 +506,22 @@ function Intro({
             <View key={i} style={[s.pageDot, i === index && s.pageDotActive]} />
           ))}
         </View>
-        <Button
-          label={
-            index === 3
-              ? "Let’s begin"
-              : index === 0
-                ? "A little introduction"
-                : "Next"
-          }
-          onPress={next}
-        />
+        {ctaReady ? (
+          <Reveal key={`cta-${index}`} delay={0} reduce={reduce}>
+            <Button
+              label={
+                index === 3
+                  ? "Let’s begin"
+                  : index === 0
+                    ? "A little introduction"
+                    : "Next"
+              }
+              onPress={next}
+            />
+          </Reveal>
+        ) : (
+          <View style={s.introCtaSlot} accessible={false} importantForAccessibility="no" />
+        )}
       </View>
     </>
   );
@@ -513,17 +539,41 @@ function SectionComplete({ question, next, back, reduce }: { question:number; ne
   };
   return <><ScreenHeader onBack={back}/><ScrollView contentContainerStyle={[s.questionScroll,{flexGrow:1,justifyContent:"center"}]}><Reveal reduce={reduce}><Text style={s.eyebrow}>SECTION {onboardingSections.indexOf(section as typeof onboardingSections[number])+1} COMPLETE</Text><Text style={s.questionTitle}>{section}.{"\n"}A little more you.</Text><Text style={s.helper}>{following ? descriptions[following] : "Your introduction is ready. Take a moment to review it before stepping inside."}</Text><Text style={s.inputNote}>Your answers are kept as you continue. You can revisit them.</Text></Reveal></ScrollView><View style={s.questionBottom}><Button label={following ? "Next: "+following : "Review my introduction"} onPress={next}/></View></>;
 }
-function Questionnaire({ index, answers, patch, next, back, reduce, busy = false }: { index: number; answers: Answers; patch: (patch: Partial<Answers>) => void; next: () => void; back: () => void; reduce: boolean; busy?: boolean }) {
-  const [code, setCode] = useState("");
+function Questionnaire({
+  index,
+  answers,
+  patch,
+  next,
+  back,
+  reduce,
+  busy = false,
+  code,
+  onCodeChange,
+  authError,
+}: {
+  index: number;
+  answers: Answers;
+  patch: (patch: Partial<Answers>) => void;
+  next: () => void;
+  back: () => void;
+  reduce: boolean;
+  busy?: boolean;
+  code: string;
+  onCodeChange: (code: string) => void;
+  authError?: string | null;
+}) {
   const [photoError, setPhotoError] = useState("");
   const [picking, setPicking] = useState(false);
+  const [phoneAttempted, setPhoneAttempted] = useState(false);
   const trait = index === PHOTO_STEP || index < TRAIT_OFFSET ? undefined : personalityQuestions[index - TRAIT_OFFSET];
   const q = index === PHOTO_STEP
     ? { label: "YOUR PHOTO", title: "Add a photo of you.", helper: "A clear photo helps your introduction feel real. It stays in this preview only." }
     : trait ? { label: trait.section.toUpperCase(), title: trait.title, helper: questionHelper(trait) } : questions[index];
   const valid = isStepValid(index, answers);
+  const codeReady = code.trim().length === 6;
+  const phoneWarning = index === 0 && phoneAttempted ? usPhoneWarning(answers.phone ?? "") : null;
   const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
-  useEffect(()=>{ scroll.current?.scrollTo({ y:0, animated:false }); },[index]);
+  useEffect(()=>{ scroll.current?.scrollTo({ y:0, animated:false }); setPhoneAttempted(false); },[index]);
   const choosePhoto = async () => {
     if (picking) return;
     setPicking(true); setPhotoError("");
@@ -533,13 +583,26 @@ function Questionnaire({ index, answers, patch, next, back, reduce, busy = false
     } catch { setPhotoError("Couldn’t open photos. Please try again."); }
     finally { setPicking(false); }
   };
+  const onContinue = () => {
+    if (index === 0 && !valid) {
+      setPhoneAttempted(true);
+      return;
+    }
+    if (index === 3 && !codeReady) return;
+    if (index !== 0 && index !== 3 && (!valid || busy)) return;
+    if (busy) return;
+    next();
+  };
+  const continueDisabled =
+    busy ||
+    (index === 0 ? false : index === 3 ? !codeReady : !valid);
   return <>
     <ScreenHeader onBack={back} />
     <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" contentContainerStyle={s.questionScroll}><Reveal key={index} reduce={reduce}><Text style={s.eyebrow}>{q.label}</Text><Text style={s.questionTitle}>{q.title}</Text>{!!q.helper&&<Text style={s.helper}>{q.helper}</Text>}<View style={s.answerArea}>
-      {index===0&&<><TextInput accessibilityLabel="US phone number" value={answers.phone??""} onChangeText={phone=>patch({phone})} placeholder="(415) 555-0100" placeholderTextColor={color.muted} keyboardType="phone-pad" autoComplete="tel" textContentType="telephoneNumber" style={s.nameInput} maxLength={16}/><Text style={[s.inputNote, usPhoneWarning(answers.phone??"") ? { color: color.accent } : null]}>{usPhoneWarning(answers.phone??"") ?? "US number · used to find your account next time."}</Text></>}
+      {index===0&&<><TextInput accessibilityLabel="US phone number" value={answers.phone??""} onChangeText={phone=>{ setPhoneAttempted(false); patch({phone: formatUsPhoneInput(phone)}); }} placeholder="(415) 555-0100" placeholderTextColor={color.muted} keyboardType="phone-pad" autoComplete="tel" textContentType="telephoneNumber" style={s.nameInput} maxLength={16}/>{phoneWarning ? <Text style={[s.inputNote, { color: color.accent }]}>{phoneWarning}</Text> : null}{authError ? <Text style={[s.inputNote, { color: color.accent }]}>{authError}</Text> : null}</>}
       {index===1&&<TextInput accessibilityLabel="First name or nickname" value={answers.name} onChangeText={name=>patch({name})} placeholder="Your first name" placeholderTextColor={color.muted} autoComplete="given-name" textContentType="givenName" style={s.nameInput} maxLength={30}/>}
       {index===2&&cityOptions.map(city=><Choice key={city} label={city} role="radio" selected={answers.city===city} onPress={()=>patch({city})}/>)}
-      {index===3&&<TextInput accessibilityLabel="Demo confirmation code" value={code} onChangeText={value=>setCode(value.replace(/\D/g,""))} placeholder="000000" placeholderTextColor={color.muted} keyboardType="number-pad" autoComplete="off" style={[s.nameInput,{letterSpacing:8}]} maxLength={6}/>}
+      {index===3&&<><TextInput accessibilityLabel="Confirmation code" value={code} onChangeText={value=>onCodeChange(value.replace(/\D/g,""))} placeholder="123456" placeholderTextColor={color.muted} keyboardType="number-pad" autoComplete="one-time-code" textContentType="oneTimeCode" style={[s.nameInput,{letterSpacing:8}]} maxLength={6}/>{authError ? <Text style={[s.inputNote, { color: color.accent }]}>{authError}</Text> : null}</>}
       {index===4&&energyLabels.map((v,i)=><Choice key={v} label={v} role="radio" selected={answers.energy===i+1} onPress={()=>patch({energy:i+1})}/>)}
       {index===5&&conversations.map(v=><Choice key={v} label={v} selected={answers.conversations.includes(v)} onPress={()=>patch({conversations:toggleChoice(answers.conversations,v,3)})}/>)}
       {index===6&&chemistryOptions.map(v=><Choice key={v} label={v} role="radio" selected={answers.chemistry===v} onPress={()=>patch({chemistry:v})}/>)}
@@ -554,7 +617,7 @@ function Questionnaire({ index, answers, patch, next, back, reduce, busy = false
       </View>}
       {trait&&<TraitChoices question={trait} values={answers.traits?.[trait.key]??[]} onChange={values=>patch({traits:{...answers.traits,[trait.key]:values}})}/>}
     </View></Reveal></ScrollView>
-    <View style={s.questionBottom}><Button label={busy ? "Signing you in…" : index===PHOTO_STEP?(valid?"Continue":"Add a photo to continue"):index===0||index===2||index===3?"Next":nextQuestion(index)===undefined?"Finish this section":"Continue"} disabled={!valid || busy} onPress={next}/></View>
+    <View style={s.questionBottom}><Button label={busy ? (index === 0 ? "Sending code…" : index === 3 ? "Verifying…" : "Signing you in…") : index===PHOTO_STEP?(valid?"Continue":"Add a photo to continue"):index===0||index===2||index===3?"Next":nextQuestion(index)===undefined?"Finish this section":"Continue"} disabled={continueDisabled} onPress={onContinue}/></View>
   </>;
 }
 type TraitQuestion = (typeof personalityQuestions)[number];
@@ -680,7 +743,7 @@ function ProfileEditor({ answers, patch }: { answers: Answers; patch: (patch: Pa
                 <Text style={s.eyebrow}>EDIT YOUR INTRODUCTION</Text>
                 <Text style={s.questionTitle}>{editing === PHOTO_STEP ? "Your photo" : trait?.title ?? questions[editing]?.title}</Text>
                 <View style={s.answerArea}>
-                  {editing === 0 && <TextInput accessibilityLabel="Phone number preview" value={draft.phone??""} onChangeText={phone=>setDraft({...draft,phone})} keyboardType="phone-pad" style={s.nameInput} maxLength={24}/>}
+                  {editing === 0 && <TextInput accessibilityLabel="Phone number preview" value={draft.phone??""} onChangeText={phone=>setDraft({...draft,phone: formatUsPhoneInput(phone)})} keyboardType="phone-pad" style={s.nameInput} maxLength={16}/>}
                   {editing === 1 && <TextInput accessibilityLabel="First name" value={draft.name} onChangeText={name => setDraft({ ...draft, name })} style={s.nameInput} maxLength={30} />}
                   {editing === 2 && cityOptions.map(city => <Choice key={city} label={city} role="radio" selected={draft.city === city} onPress={() => setDraft({ ...draft, city })} />)}
                   {editing === 4 && energyLabels.map((v, i) => <Choice key={v} label={v} role="radio" selected={draft.energy === i + 1} onPress={() => setDraft({ ...draft, energy: i + 1 })} />)}
@@ -855,7 +918,7 @@ function Conditions({
             <Text style={s.edit}>View all conditions pages</Text>
           </Pressable>
           <Text style={s.inputNote}>
-            Fill company, address, website, and email placeholders before launch. Have counsel review.
+            Have a lawyer review these conditions before public launch.
           </Text>
           {saveError ? <Text style={[s.helper, { color: color.accent, marginTop: 16 }]}>{saveError}</Text> : null}
         </Reveal>
@@ -1218,32 +1281,71 @@ export default function AppContent() {
   const { width } = useWindowDimensions();
   const lastPress = useRef(0);
   const [signingIn, setSigningIn] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
+  const recaptchaRef = useRef<FirebaseRecaptchaVerifierModal>(null);
   const homeFade = useRef(new Animated.Value(unlocked ? 1 : 0)).current;
   const next = () => {
     const now = Date.now();
     if (now - lastPress.current < 400 || signingIn) return;
     lastPress.current = now;
     Keyboard.dismiss();
-    // Phone-first login: known numbers skip name/city; code step opens home.
-    if (flow.stage === "questions" && (flow.question === 0 || flow.question === 3)) {
+    if (flow.stage === "questions" && flow.question === 0) {
       const phone = flow.answers.phone;
-      const question = flow.question;
+      if (!isStepValid(0, flow.answers)) return;
       setSigningIn(true);
-      void tryReturningLogin(phone)
-        .then((known) => {
-          if (known && question === 0) {
-            dispatch({ type: "phoneKnown", name: known.name, phone });
+      setAuthError(null);
+      void (async () => {
+        try {
+          if (isFirebaseConfigured()) {
+            const verifier = recaptchaRef.current;
+            if (!verifier) throw new Error("RECAPTCHA_MISSING");
+            await sendPhoneCode(phone, verifier);
+            setOtpCode("");
+            dispatch({ type: "awaitCode", phone });
             return;
           }
-          if (known && question === 3) {
-            // Stay on / and fade into home — no route remount.
+          // Loopback-only fallback without Firebase.
+          const known = await tryReturningLogin(phone);
+          if (known) dispatch({ type: "phoneKnown", name: known.name, phone });
+          else dispatch({ type: "next" });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Couldn’t send code";
+          setAuthError(
+            message.includes("too-many-requests")
+              ? "Too many attempts. Wait a bit and try again."
+              : "Couldn’t send a code. Check the number and try again.",
+          );
+          Alert.alert("Code not sent", "Check your number and try again.");
+        } finally {
+          setSigningIn(false);
+        }
+      })();
+      return;
+    }
+    if (flow.stage === "questions" && flow.question === 3) {
+      const phone = flow.answers.phone;
+      if (otpCode.trim().length !== 6) return;
+      setSigningIn(true);
+      setAuthError(null);
+      void (async () => {
+        try {
+          if (isFirebaseConfigured()) {
+            await confirmPhoneCode(otpCode);
+            await ensureFirebaseSession();
+          }
+          const known = await tryReturningLogin(phone);
+          if (known) {
             dispatch({ type: "returningHome", name: known.name, phone });
             return;
           }
-          dispatch({ type: "next" });
-        })
-        .catch(() => dispatch({ type: "next" }))
-        .finally(() => setSigningIn(false));
+          dispatch({ type: "codeVerifiedNew" });
+        } catch {
+          setAuthError("That code didn’t work. Try again.");
+        } finally {
+          setSigningIn(false);
+        }
+      })();
       return;
     }
     dispatch({ type: "next" });
@@ -1290,6 +1392,13 @@ export default function AppContent() {
   return (
     <View style={s.outer}>
       <StatusBar style="light" />
+      {isFirebaseConfigured() ? (
+        <FirebaseRecaptchaVerifierModal
+          ref={recaptchaRef}
+          firebaseConfig={getFirebaseWebConfig()}
+          attemptInvisibleVerification
+        />
+      ) : null}
       <View style={[s.appFrame, width > 600 && s.desktopFrame]}>
         <SafeAreaView style={s.safe} edges={["top", "bottom"]}>
           <KeyboardAvoidingView
@@ -1313,6 +1422,9 @@ export default function AppContent() {
                 back={back}
                 reduce={reduce}
                 busy={signingIn}
+                code={otpCode}
+                onCodeChange={(value) => { setAuthError(null); setOtpCode(value); }}
+                authError={authError}
               />
             )}
             {!showHome && flow.stage === "section" && <SectionComplete question={flow.question} next={next} back={back} reduce={reduce}/>}
@@ -1441,6 +1553,9 @@ const s = StyleSheet.create({
   introBottom: {
     paddingHorizontal: 32,
     paddingBottom: Platform.OS === "web" ? 23 : 10,
+  },
+  introCtaSlot: {
+    minHeight: 56,
   },
   pageDots: {
     flexDirection: "row",

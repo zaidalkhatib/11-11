@@ -1,4 +1,4 @@
-/** Local-dev API session for simulator hookup. In-memory token only. */
+/** API session: Firebase ID token in production; local-dev JWT only on loopback. */
 import {
   ApiError,
   createClient,
@@ -16,6 +16,8 @@ import {
   selectScheduledEvent,
   type Client,
 } from "./contracts/preview-adapter";
+import { clearAuthSession, getAuthIdToken, refreshAuthIdToken } from "./auth";
+import { isFirebaseConfigured } from "./firebase";
 import { isValidUsPhone, type Answers } from "./onboarding";
 
 export type { Event, Client, Invitation };
@@ -30,20 +32,58 @@ export function apiBaseUrl(): string {
   return (process.env.EXPO_PUBLIC_API_BASE_URL ?? DEFAULT_BASE).replace(/\/$/, "");
 }
 
-export async function ensureSession(subject?: string): Promise<Client> {
-  if (client && accessToken) return client;
-  const session = await createLocalDevSession(apiBaseUrl(), fetch, subject ? { subject } : {});
-  if (!session.accessToken) throw new Error("LOCAL_DEV_SESSION_EMPTY");
-  accessToken = session.accessToken;
-  client = createClient(apiBaseUrl(), async () => accessToken ?? "", fetch, {
-    allowInsecureLocalhost: true,
+function isLoopbackApi(): boolean {
+  const base = apiBaseUrl();
+  return base.includes("127.0.0.1") || base.includes("localhost");
+}
+
+async function tokenProvider(): Promise<string> {
+  if (isFirebaseConfigured()) {
+    const fresh = (await refreshAuthIdToken()) ?? getAuthIdToken();
+    if (fresh) {
+      accessToken = fresh;
+      return fresh;
+    }
+  }
+  return accessToken ?? "";
+}
+
+function buildClient(token: string): Client {
+  accessToken = token;
+  client = createClient(apiBaseUrl(), tokenProvider, fetch, {
+    allowInsecureLocalhost: isLoopbackApi(),
   });
   return client;
+}
+
+/** Use after Firebase phone sign-in. */
+export async function ensureFirebaseSession(): Promise<Client> {
+  const token = (await refreshAuthIdToken()) ?? getAuthIdToken();
+  if (!token) throw new Error("FIREBASE_SESSION_EMPTY");
+  return buildClient(token);
+}
+
+export async function ensureSession(subject?: string): Promise<Client> {
+  if (client && accessToken) return client;
+
+  if (isFirebaseConfigured() && (getAuthIdToken() || (await refreshAuthIdToken()))) {
+    return ensureFirebaseSession();
+  }
+
+  // Production Railway has no local-dev routes — require Firebase.
+  if (!isLoopbackApi()) {
+    throw new Error("FIREBASE_SIGN_IN_REQUIRED");
+  }
+
+  const session = await createLocalDevSession(apiBaseUrl(), fetch, subject ? { subject } : {});
+  if (!session.accessToken) throw new Error("LOCAL_DEV_SESSION_EMPTY");
+  return buildClient(session.accessToken);
 }
 
 export function clearSession(): void {
   accessToken = null;
   client = null;
+  clearAuthSession();
 }
 
 /** Provisional DOB from age trait — adult check only, not identity verification. */
@@ -66,11 +106,12 @@ export function previewFromAnswers(answers: Answers) {
 }
 
 export async function createProfileAndAnswers(answers: Answers) {
-  const api = await ensureSession(`mobile-${answers.phone.replace(/\D/g, "").slice(-10) || "anon"}`);
+  const api = await ensureSession(
+    isFirebaseConfigured() ? undefined : `mobile-${answers.phone.replace(/\D/g, "").slice(-10) || "anon"}`,
+  );
   const catalog = await api.questionnaire();
   const dob = provisionalDobFromAge(answers.traits.age?.[0]);
   if (!dob) return { state: "blocked" as const, code: "AGE_REQUIRED" };
-  // Retry / returning phone: update existing profile instead of re-inserting (409 CONFLICT_RELOAD_AND_RETRY).
   let expectedVersion: number | null = null;
   try {
     expectedVersion = (await api.profile()).version;
@@ -115,17 +156,19 @@ export async function fetchInvitations(): Promise<Invitation[]> {
 }
 
 export async function triggerMatcher(): Promise<{ pairsCreated: number }> {
+  if (!isLoopbackApi()) return { pairsCreated: 0 };
   return runLocalDevMatcher(apiBaseUrl());
 }
 
-/** Same phone → same local-dev subject. If a profile already exists, treat as login. */
+/** After Firebase sign-in (or local-dev), load profile if it already exists. */
 export async function tryReturningLogin(phone: string): Promise<{ name: string } | null> {
   if (!isValidUsPhone(phone)) return null;
   const digits = phone.replace(/\D/g, "");
   const national = digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
-  clearSession();
   try {
-    const api = await ensureSession(`mobile-${national}`);
+    const api = isFirebaseConfigured() && getAuthIdToken()
+      ? await ensureFirebaseSession()
+      : await ensureSession(`mobile-${national}`);
     const profile = await api.profile();
     if (!profile?.displayName?.trim()) return null;
     return { name: profile.displayName.trim() };

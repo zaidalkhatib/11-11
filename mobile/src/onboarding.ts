@@ -172,6 +172,24 @@ export function questionSection(index: number): string {
 export const onboardingOrder = onboardingSections.flatMap(section => Array.from({length:QUESTION_COUNT},(_,i)=>i).filter(i=>questionSection(i)===section));
 export const nextQuestion = (question: number) => onboardingOrder[onboardingOrder.indexOf(question)+1];
 export const previousQuestion = (question: number) => onboardingOrder[onboardingOrder.indexOf(question)-1];
+/** Format US phone as the user types: (415) 555-0100 or 1 (415) 555-0100. */
+export function formatUsPhoneInput(value: string): string {
+  const raw = value.replace(/\D/g, "");
+  const withCountry = raw.length > 10 && raw.startsWith("1");
+  const digits = withCountry ? raw.slice(0, 11) : raw.slice(0, 10);
+  const national = withCountry ? digits.slice(1) : digits;
+  const prefix = withCountry || digits === "1" ? "1" : "";
+
+  if (!national.length) return prefix;
+
+  let body = "";
+  if (national.length < 4) body = `(${national}`;
+  else if (national.length < 7) body = `(${national.slice(0, 3)}) ${national.slice(3)}`;
+  else body = `(${national.slice(0, 3)}) ${national.slice(3, 6)}-${national.slice(6)}`;
+
+  return prefix ? `${prefix} ${body}` : body;
+}
+
 /** US / NANP format check for UI preview — not carrier verification. */
 export function isValidUsPhone(phone: string): boolean {
   const digits = phone.replace(/\D/g, "");
@@ -196,7 +214,8 @@ export function isStepValid(step: number, answers: Answers): boolean {
     case 2:
       return (cityOptions as readonly string[]).includes(answers.city);
     case 3:
-      return true; // UI-only code step; never represents authentication.
+      // Code length checked in UI before advance; step stays open for Firebase confirm.
+      return true;
     case 4:
       return (
         Number.isInteger(answers.energy) &&
@@ -268,6 +287,10 @@ export type Action =
   | { type: "reset" }
   /** Known phone: skip name/city and land on the code step. */
   | { type: "phoneKnown"; name: string; phone: string }
+  /** OTP sent — jump to confirmation code step. */
+  | { type: "awaitCode"; phone: string }
+  /** New user after OTP — continue at name. */
+  | { type: "codeVerifiedNew" }
   /** Returning phone session: skip signup and open home. */
   | { type: "returningHome"; name: string; phone: string };
 export function flowReducer(state: Flow, action: Action): Flow {
@@ -285,6 +308,21 @@ export function flowReducer(state: Flow, action: Action): Flow {
           name: action.name,
           phone: action.phone,
         },
+      };
+    case "awaitCode":
+      return {
+        ...state,
+        stage: "questions",
+        question: 3,
+        reviewAfterEdit: false,
+        answers: { ...state.answers, phone: action.phone },
+      };
+    case "codeVerifiedNew":
+      return {
+        ...state,
+        stage: "questions",
+        question: 1,
+        reviewAfterEdit: false,
       };
     case "returningHome":
       return {

@@ -1,5 +1,13 @@
 import { FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
-import { Auth, getAuth } from "firebase/auth";
+import {
+  Auth,
+  getAuth,
+  initializeAuth,
+  // @ts-expect-error RN persistence export exists at runtime in firebase/auth
+  getReactNativePersistence,
+} from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ?? "",
@@ -9,6 +17,10 @@ const firebaseConfig = {
   messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? "",
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID ?? "",
 };
+
+export function getFirebaseWebConfig() {
+  return { ...firebaseConfig };
+}
 
 export function isFirebaseConfigured(): boolean {
   return Boolean(firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId);
@@ -34,6 +46,18 @@ export function getFirebaseApp(): FirebaseApp {
 }
 
 export function getFirebaseAuth(): Auth {
-  if (!auth) auth = getAuth(getFirebaseApp());
+  if (auth) return auth;
+  const firebaseApp = getFirebaseApp();
+  if (Platform.OS === "web") {
+    auth = getAuth(firebaseApp);
+  } else {
+    try {
+      auth = initializeAuth(firebaseApp, {
+        persistence: getReactNativePersistence(AsyncStorage),
+      });
+    } catch {
+      auth = getAuth(firebaseApp);
+    }
+  }
   return auth;
 }

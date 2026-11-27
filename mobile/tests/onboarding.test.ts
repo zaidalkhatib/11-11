@@ -14,6 +14,7 @@ import {
   initialFlow,
   isComplete,
   isStepValid,
+  formatUsPhoneInput,
   toggleChoice,
   type Answers,
 } from "../src/onboarding.ts";
@@ -31,6 +32,14 @@ const complete = (): Answers => ({
     return [q.key, q.options.slice(0, min)];
   })),
   photoUri: "preview://photo",
+});
+test("phone OTP jumps to code then new users resume at name", () => {
+  let f = initialFlow();
+  f = flowReducer(f, { type: "awaitCode", phone: "(415) 555-0100" });
+  assert.equal(f.question, 3);
+  assert.equal(f.answers.phone, "(415) 555-0100");
+  f = flowReducer(f, { type: "codeVerifiedNew" });
+  assert.equal(f.question, 1);
 });
 test("starts before signup and requires four introduction pages", () => {
   let f = initialFlow();
@@ -186,6 +195,14 @@ test("phone requires a valid US number; code preview is not verification", () =>
   assert.equal(isStepValid(1, complete()), true);
   assert.equal(isStepValid(2, complete()), true);
   assert.equal(isComplete({...complete(), experiences:[]}), true);
+});
+test("formats US phone as the user types", () => {
+  assert.equal(formatUsPhoneInput("4"), "(4");
+  assert.equal(formatUsPhoneInput("415"), "(415");
+  assert.equal(formatUsPhoneInput("4153"), "(415) 3");
+  assert.equal(formatUsPhoneInput("4153193296"), "(415) 319-3296");
+  assert.equal(formatUsPhoneInput("14155550100"), "1 (415) 555-0100");
+  assert.equal(isStepValid(0, { ...complete(), phone: formatUsPhoneInput("4153193296") }), true);
 });
 test("every personality answer is required and height options are precise", () => {
   const a=complete();
