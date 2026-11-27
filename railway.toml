@@ -1,4 +1,6 @@
-# Deploy the Spring API from the monorepo root.
+# Monorepo: deploy the Spring API only.
+# In Railway → Service Settings → Root Directory, set: backend
+# Builder: Dockerfile (or leave as configured below).
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "backend/Dockerfile"
@@ -6,5 +8,5 @@ watchPatterns = ["backend/**"]
 
 [deploy]
 healthcheckPath = "/health"
-healthcheckTimeout = 30
+healthcheckTimeout = 60
 restartPolicyType = "ON_FAILURE"
