@@ -35,6 +35,8 @@ public class SecurityConfig {
         http.csrf(c -> c.disable()).sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(a -> {
                 a.requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/questionnaire", "/api/v1/events", "/health").permitAll();
+                // Controller exists only under local-dev; without it this path 404s after permit.
+                a.requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/local-dev/session", "/api/v1/local-dev/run-matcher").permitAll();
                 if (injected.getIfAvailable() != null || !issuer.isBlank()) a.anyRequest().authenticated();
                 else a.anyRequest().denyAll();
             });

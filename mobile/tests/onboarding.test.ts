@@ -5,6 +5,8 @@ import {
   personalityQuestions,
   questionHelper,
   QUESTION_COUNT,
+  PHOTO_STEP,
+  TRAIT_OFFSET,
   onboardingOrder,
   onboardingSections,
   questionSection,
@@ -17,14 +19,18 @@ import {
 } from "../src/onboarding.ts";
 const complete = (): Answers => ({
   name: "Alex",
-  phone: "",
+  phone: "4155550100",
+  city: "San Diego",
   experiences: ["Dinner"],
   energy: 3,
   conversations: ["Big ideas", "Food"],
   chemistry: "Easy laughter",
   note: "",
-  traits: Object.fromEntries(personalityQuestions.map(q => [q.key, [q.options[0]]])),
-  photoUri: "",
+  traits: Object.fromEntries(personalityQuestions.map(q => {
+    const min = "min" in q ? q.min : 1;
+    return [q.key, q.options.slice(0, min)];
+  })),
+  photoUri: "preview://photo",
 });
 test("starts before signup and requires four introduction pages", () => {
   let f = initialFlow();
@@ -44,19 +50,32 @@ test("cannot skip an unanswered question or enter home without complete answers"
   );
   assert.equal(isComplete(emptyAnswers()), false);
 });
-test("requires valid choices, name, social energy and personality options", () => {
+test("requires valid choices, name, social energy, personality options and photo", () => {
   const a = complete();
   assert.equal(isComplete(a), true);
-  assert.equal(isStepValid(0, { ...a, name: "   " }), false);
-  assert.equal(isStepValid(1, { ...a, phone: "bad" }), false);
-  assert.equal(isStepValid(3, { ...a, energy: 6 }), false);
-  assert.equal(isStepValid(3, { ...a, energy: 2.5 }), false);
-  assert.equal(isStepValid(4, { ...a, conversations: ["Food"] }), false);
-  assert.equal(isStepValid(5, { ...a, chemistry: "Other" }), false);
-  assert.equal(isStepValid(6, { ...a, traits: {} }), false);
-  assert.equal(isStepValid(6, { ...a, traits: { religion: ["Invented"] } }), false);
+  assert.equal(isStepValid(0, { ...a, phone: "bad" }), false);
+  assert.equal(isStepValid(0, { ...a, phone: "" }), false);
+  assert.equal(isStepValid(0, { ...a, phone: "4153193286" }), true);
+  assert.equal(isStepValid(0, { ...a, phone: "14155550100" }), true);
+  assert.equal(isStepValid(0, { ...a, phone: "(415) 555-0100" }), true);
+  assert.equal(isStepValid(0, { ...a, phone: "0555550100" }), false);
+  assert.equal(isStepValid(1, { ...a, name: "   " }), false);
+  assert.equal(isStepValid(1, { ...a, name: "Alex" }), true);
+  assert.equal(isStepValid(2, { ...a, city: "" }), false);
+  assert.equal(isStepValid(2, { ...a, city: "San Diego" }), true);
+  assert.equal(isStepValid(4, { ...a, energy: 6 }), false);
+  assert.equal(isStepValid(4, { ...a, energy: 2.5 }), false);
+  assert.equal(isStepValid(5, { ...a, conversations: ["Food"] }), false);
+  assert.equal(isStepValid(6, { ...a, chemistry: "Other" }), false);
+  assert.equal(isStepValid(TRAIT_OFFSET, { ...a, traits: {} }), false);
+  assert.equal(isStepValid(TRAIT_OFFSET, { ...a, traits: { religion: ["Invented"] } }), false);
+  assert.equal(isStepValid(PHOTO_STEP, { ...a, photoUri: "" }), false);
+  assert.equal(isComplete({ ...a, photoUri: "" }), false);
+  assert.equal(isStepValid(PHOTO_STEP, a), true);
+  assert.equal(questionSection(PHOTO_STEP), "Love & connection");
+  assert.equal(onboardingOrder[onboardingOrder.length - 1], PHOTO_STEP);
 });
-test("valid complete path passes questions, review, then gated home", () => {
+test("valid complete path passes questions, review, conditions, then gated home", () => {
   let f = {
     ...initialFlow(),
     stage: "questions" as const,
@@ -64,6 +83,10 @@ test("valid complete path passes questions, review, then gated home", () => {
   } as ReturnType<typeof initialFlow>;
   for (let i = 0; i < QUESTION_COUNT + onboardingSections.length; i++) f = flowReducer(f, { type: "next" });
   assert.equal(f.stage, "review");
+  f = flowReducer(f, { type: "next" });
+  assert.equal(f.stage, "conditions");
+  assert.equal(flowReducer(f, { type: "next" }).stage, "conditions");
+  for (const id of Object.keys(f.conditionsAccepted)) f = flowReducer(f, { type: "toggleCondition", id });
   f = flowReducer(f, { type: "next" });
   assert.equal(f.stage, "home");
   assert.equal(flowReducer(f, { type: "next" }), f);
@@ -92,7 +115,7 @@ test("editing profile relocks app until valid and re-reviewed", () => {
     stage: "home" as const,
     answers: complete(),
   };
-  let f = flowReducer(home, { type: "edit", question: 0 });
+  let f = flowReducer(home, { type: "edit", question: 1 });
   f = flowReducer(f, { type: "answer", patch: { name: "" } });
   assert.equal(f.stage, "questions");
   assert.equal(flowReducer(f, { type: "next" }), f);
@@ -113,7 +136,7 @@ test("editing one answer returns to review without repeating completed questions
     stage: "home" as const,
     answers: complete(),
   };
-  let f = flowReducer(home, { type: "edit", question: 0 });
+  let f = flowReducer(home, { type: "edit", question: 1 });
   f = flowReducer(f, { type: "answer", patch: { name: "Sam" } });
   f = flowReducer(f, { type: "next" });
   assert.equal(f.stage, "review");
@@ -124,9 +147,9 @@ test("editing one answer returns to review without repeating completed questions
 test("each personality question validates single/multiple choice boundaries", () => {
   personalityQuestions.forEach((q, i) => {
     const a = complete();
-    const step = i + 6;
+    const step = i + TRAIT_OFFSET;
     assert.equal(isStepValid(step, a), true);
-    assert.equal(isStepValid(step, { ...a, traits: { ...a.traits, [q.key]: [] } }), "optional" in q && q.optional);
+    assert.equal(isStepValid(step, { ...a, traits: { ...a.traits, [q.key]: [] } }), false);
     const max = "max" in q ? q.max : 1;
     assert.equal(isStepValid(step, { ...a, traits: { ...a.traits, [q.key]: q.options.slice(0, max + 1) } }), false);
     assert.equal(isStepValid(step, { ...a, traits: { ...a.traits, [q.key]: [q.options[0], q.options[0]] } }), false);
@@ -134,33 +157,43 @@ test("each personality question validates single/multiple choice boundaries", ()
 });
 test("profile patches preserve app access and unrelated answers", () => {
   const home = { ...initialFlow(), stage: "home" as const, answers: complete() };
-  const updated = flowReducer(home, { type: "answer", patch: { photoUri: "local-photo", traits: {...home.answers.traits, religion: ["Prefer not to say"]} } });
+  const religion = personalityQuestions.find(q => q.key === "religion")!.options[0];
+  const updated = flowReducer(home, { type: "answer", patch: { photoUri: "local-photo", traits: {...home.answers.traits, religion: [religion]} } });
   assert.equal(updated.stage, "home");
   assert.equal(updated.answers.photoUri, "local-photo");
   assert.equal(updated.answers.name, home.answers.name);
   assert.equal(isComplete(updated.answers), true);
 });
 
-test("expanded profile has unique keys and requested identity choices", () => {
-  assert.equal(QUESTION_COUNT, 88);
+test("expanded profile has unique keys and required identity choices", () => {
+  assert.equal(QUESTION_COUNT, 101);
+  assert.equal(PHOTO_STEP, 100);
+  assert.equal(TRAIT_OFFSET, 7);
   assert.equal(new Set(personalityQuestions.map(q => q.key)).size, personalityQuestions.length);
   const gender = personalityQuestions.find(q => q.key === "gender");
   assert.ok(gender?.options.includes("Male"));
   assert.ok(gender?.options.includes("Female"));
-  assert.ok(gender?.options.includes("Prefer not to say"));
+  assert.ok(!(gender?.options as readonly string[] | undefined)?.includes("Prefer not to say"));
+  for (const question of personalityQuestions) {
+    assert.ok(!("optional" in question && question.optional), question.key);
+    assert.ok(!(question.options as readonly string[]).includes("Prefer not to say"), question.key);
+  }
 });
 
-test("phone and code preview never require a real verification", () => {
+test("phone requires a valid US number; code preview is not verification", () => {
+  assert.equal(isStepValid(0, complete()), true);
+  assert.equal(isStepValid(0, { ...complete(), phone: "123" }), false);
   assert.equal(isStepValid(1, complete()), true);
   assert.equal(isStepValid(2, complete()), true);
   assert.equal(isComplete({...complete(), experiences:[]}), true);
 });
-test("sensitive optional questions can be skipped and height options are precise", () => {
+test("every personality answer is required and height options are precise", () => {
   const a=complete();
-  for(const q of personalityQuestions) if("optional" in q) delete a.traits[q.key];
-  assert.equal(isComplete(a),true);
+  delete a.traits.bodyBuild;
+  assert.equal(isComplete(a),false);
   const height=personalityQuestions.find(q=>q.key==="height")!;
   assert.ok(height.options.includes("5′10″ / 178 cm"));
+  assert.ok(!(height.options as readonly string[]).includes("Prefer not to say"));
 });
 
 test("onboarding groups all questions once and transitions between every section",()=>{
@@ -186,33 +219,45 @@ test("every question has contextual helper copy and an explicit selection limit"
     assert.ok(question.helper.length > 25, question.key);
     assert.ok(!/^Choose (one|two|up to)/.test(question.helper), question.key);
     const helper = questionHelper(question);
-    assert.match(helper, "max" in question ? /Up to \d selections\./ : /One selection\./);
+    const max = "max" in question ? question.max : 1;
+    const min = "min" in question ? question.min : 1;
+    assert.match(
+      helper,
+      max === 1 ? /One selection\./ : min === max ? new RegExp(`Choose ${max}\\.`) : /Up to \d selections\./,
+    );
   }
 });
-test("new partner compatibility questions are optional and independently editable", () => {
-  const keys = ["relationshipStructure", "childrenAlignment", "smokingFit", "drinkingFit", "distanceFit", "partnerEnergy"];
+test("partner compatibility questions are required and independently editable", () => {
+  const keys = ["relationshipStructure", "childrenAlignment", "partnerHasChildren", "smokingFit", "drinkingFit", "partnerEnergy", "smokingOwn", "drinkingOwn", "dietary", "petsFit", "age", "looksImportance", "partnerPriorities", "partnerCareerDrive", "partnerFitness"];
   const answers = emptyAnswers();
   for (const key of keys) {
     const index = personalityQuestions.findIndex(q => q.key === key);
     assert.ok(index >= 0);
-    assert.ok(isStepValid(index + 6, answers));
+    assert.equal(isStepValid(index + TRAIT_OFFSET, answers), false);
     const question = personalityQuestions[index];
-    assert.ok(isStepValid(index + 6, {...answers, traits: {[key]: [question.options[0]]}}));
-    assert.ok(!isStepValid(index + 6, {...answers, traits: {[key]: ["invented answer"]}}));
+    const min = "min" in question ? question.min : 1;
+    const validPick = question.options.slice(0, min);
+    assert.ok(isStepValid(index + TRAIT_OFFSET, {...answers, traits: {[key]: validPick}}));
+    if (min > 1) {
+      assert.equal(isStepValid(index + TRAIT_OFFSET, {...answers, traits: {[key]: [question.options[0]]}}), false);
+    }
+    assert.ok(!isStepValid(index + TRAIT_OFFSET, {...answers, traits: {[key]: ["invented answer"]}}));
+    assert.ok(!(question.options as readonly string[]).includes("Prefer not to say"), key);
   }
 });
 
-test("relationship-process prompts are optional, neutral, and preserve older profiles", () => {
+test("relationship-process prompts are required, neutral, and preserve unrelated answers", () => {
   const keys = ["goodNewsSupport", "feelingUnderstood", "conflictRepair", "goalSupport"];
   const answers = complete();
   for (const key of keys) {
     const index = personalityQuestions.findIndex(q => q.key === key);
     assert.ok(index >= 0);
     delete answers.traits[key];
-    assert.ok(isStepValid(index + 6, answers));
+    assert.equal(isStepValid(index + TRAIT_OFFSET, answers), false);
   }
-  assert.ok(isComplete(answers));
-  const updated = flowReducer({...initialFlow(), stage: "home", answers}, {type: "answer", patch: {traits: {...answers.traits, goalSupport: ["Encourage me and let me lead"]}}});
+  assert.equal(isComplete(answers), false);
+  const filled = complete();
+  const updated = flowReducer({...initialFlow(), stage: "home", answers: filled}, {type: "answer", patch: {traits: {...filled.traits, goalSupport: ["Encourage me and let me lead"]}}});
   assert.equal(updated.stage, "home");
-  assert.deepEqual(updated.answers.traits.religion, answers.traits.religion);
+  assert.deepEqual(updated.answers.traits.religion, filled.traits.religion);
 });

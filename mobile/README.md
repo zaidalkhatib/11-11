@@ -1,8 +1,22 @@
-# 11:11 · iOS-first UI preview
+# 11:11 · iOS-first app
 
-A real React Native / Expo project, with a browser preview for quick design iteration. There is no backend, account creation, matching, messaging, booking, analytics, or persistent storage.
+Expo React Native app. Against **local-dev** Spring (`127.0.0.1:8080`) it saves profile/answers after conditions, lists seeded dinners, joins interest, and can reach a local match. Phone code is UI-only (no SMS). No production OIDC, push, or booking.
 
-## Run
+## Run with local API
+
+```sh
+# terminal 1 — H2 DB + seeded dinners + loopback JWT
+./scripts/local-dev.sh
+
+# terminal 2
+cd mobile
+npm install
+npx expo start --ios
+```
+
+Optional: `EXPO_PUBLIC_API_BASE_URL=http://127.0.0.1:8080` (default).
+
+## UI-only / web preview
 
 From this folder:
 

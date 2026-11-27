@@ -1,6 +1,6 @@
 # 11:11 — Shared project brief
 
-Status: website concept and iOS-first UI-only app execution authorized (D-014), updated 2026-11-08; original organization baseline retained in the decision log. Applies to all four workstreams. Approved requirements are traced in the [decision log](decision-log.md).
+Status: **UI-first** (D-017). Website and iOS UI authorized (D-014); **88-step** questionnaire accepted (D-015); backend foundation accepted but **deferred** (D-016/D-017). Launch scope: **18+**, **San Diego**, **Dinner only** (expand later). Updated 2026-11-26. Applies to all four workstreams. Approved requirements are traced in the [decision log](decision-log.md).
 
 ## Confirmed requirements
 
@@ -19,6 +19,10 @@ Status: website concept and iOS-first UI-only app execution authorized (D-014), 
 
 D-014 authorizes building the iOS-first UI now, iterating from an original design without requiring screenshots or backend work. Show slowly revealed informational pages first, followed by mandatory personality questions, then allow access to the app. The implementation uses local-memory demo answers and clearly labeled sample experiences. Exact question wording, authentication, matching, privacy and operating policies remain proposals. This supersedes earlier mobile-implementation exclusions below only for the local UI prototype; production launch boundaries remain.
 
+**Accepted questionnaire (D-015–D-022):** the gated flow is **101 steps** in `mobile/src/onboarding.ts`, structured for automated reciprocal matching: name/phone/**city (San Diego only for now)**/…, self traits + partner preferences (age, career, fitness, priorities, partner with children), looks self-rating + looks importance, lifestyle, values/personality, required photo. Distance preference removed while local-only. No Prefer not to say / skip. Live auto-matching still gated (Q-03, Q-09, Gate 3+).
+
+**Accepted backend foundation (D-016):** `backend/` is the authorized Spring Boot API foundation. Clients still must not call it until Gate 3+ and an explicit wiring approval. This supersedes D-014’s “no backend work” exclusion for the isolated service only.
+
 ## Website-phase authorization and boundaries (historical)
 
 Website design and implementation, live reference inspection, and cross-platform architecture planning are now authorized (D-008–D-010). The earlier screenshot hold is superseded by the explicit instruction to inspect the live reference first. The website implementation lead reports inspecting 222 before implementation on 2026-11-08.
@@ -31,10 +35,10 @@ The latest minimalist revision (D-013) removes the footer, idea panel and visibl
 
 All questions are unresolved and require user direction or an explicitly approved decision. IDs are stable for handoffs.
 
-- **Q-01 — Audience and eligibility:** Who is the initial audience? What age, location, relationship-intent, and other eligibility rules apply?
-- **Q-02 — Launch scope:** Which geography, audience size, and experience types should be considered first?
-- **Q-03 — Signup:** Phone-first concept interaction is now specified (D-011), but account verification, required fields, consent and actual signup commitments remain unresolved. What does signing up for an experience commit someone to, and what availability or preferences are collected?
-- **Q-04 — Personality matching:** What personality inputs, compatibility criteria, preferences, dealbreakers, and human review should be considered? What does success mean? No algorithm is selected.
+- **Q-01 — Audience and eligibility:** **Partially resolved (D-017):** initial audience is **18+**. Relationship-intent and other eligibility rules remain open.
+- **Q-02 — Launch scope:** **Partially resolved (D-017):** first geography is **San Diego** (expand later); first experience type is **Dinner only** (adventure/creative and others later). Audience size still open.
+- **Q-03 — Signup:** Phone-first concept interaction is specified (D-011). **Verification and production enrollment are deferred** while UI is finished (D-017). What real signup commits someone to, required fields, and consent remain unresolved for Gate 3.
+- **Q-04 — Personality matching:** **Direction approved (D-022):** fully **automated** reciprocal matching — similar values/personality, plus self attributes (looks, career, age, fitness, etc.) paired with what each person cares about in a partner (e.g. high looks-importance → partner with strong looks self-rating / later 11:11 looks rating). Exact weights, dealbreakers, anti-gaming, and success metrics still open. No live auto-matching of real users until Gate 3+.
 - **Q-05 — Reveal and anticipation:** What information is revealed, at what time, through which notifications? How blind is the date, and what consent is needed? Messages-inspired chat is a requested direction, not a selected or verified delivery channel. Native iMessage capabilities, provider access and rich-action support must be investigated before promising them.
 - **Q-06 — Logistics:** Who selects venues, coordinates schedules, communicates details, and handles changes? How are accessibility and dietary needs accommodated?
 - **Q-07 — Commercial model:** Is there pricing, membership, payment, or venue compensation? Who pays for dinner or activities? No model or budget is approved.

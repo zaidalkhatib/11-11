@@ -836,7 +836,7 @@
       "kind": "SELF",
       "target": null,
       "sensitive": false,
-      "scoring": "EXCLUDED",
+      "scoring": "INACTIVE",
       "maximum": 1,
       "options": [
         {
@@ -910,11 +910,11 @@
     {
       "id": "looksImportance",
       "version": 1,
-      "title": "How much do looks matter to you?",
+      "title": "How much do looks matter to you in a partner?",
       "kind": "IMPORTANCE",
       "target": null,
       "sensitive": false,
-      "scoring": "EXCLUDED",
+      "scoring": "INACTIVE",
       "maximum": 1,
       "options": [
         {
@@ -1156,7 +1156,7 @@
     {
       "id": "interestedIn",
       "version": 1,
-      "title": "Who would you like to meet?",
+      "title": "Who are you open to meeting?",
       "kind": "PREFERENCE",
       "target": "gender",
       "sensitive": false,
@@ -1177,19 +1177,7 @@
         },
         {
           "id": "o03",
-          "label": "Non-binary people",
-          "declined": false,
-          "exclusive": false
-        },
-        {
-          "id": "o04",
-          "label": "People of any gender",
-          "declined": false,
-          "exclusive": false
-        },
-        {
-          "id": "o05",
-          "label": "Still exploring",
+          "label": "Men and women",
           "declined": false,
           "exclusive": false
         },
@@ -4069,7 +4057,43 @@
         },
         {
           "id": "o06",
-          "label": "What makes us, us",
+          "label": "Books & stories",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "Humor and banter",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "Work and ambition",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o09",
+          "label": "Faith and meaning",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o10",
+          "label": "Sports & games",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o11",
+          "label": "Art and design",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o12",
+          "label": "Science & discovery",
           "declined": false,
           "exclusive": false
         }

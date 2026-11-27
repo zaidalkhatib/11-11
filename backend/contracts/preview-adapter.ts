@@ -8,12 +8,17 @@ export type PreviewAnswers = {
 };
 export type Client = ReturnType<typeof createClient>;
 export function prepareAnswers(catalog: Catalog, preview: PreviewAnswers, consentedQuestionIds: ReadonlySet<string> = new Set()) {
-  return mapPreviewLabels(catalog, {
+  const plan = mapPreviewLabels(catalog, {
     ...preview.traits,
     energy: preview.energy === null ? [] : [String(preview.energy)],
     conversations: preview.conversations,
     chemistry: preview.chemistry ? [preview.chemistry] : [],
   }, consentedQuestionIds);
+  // height / bodyBuild / childhoodResources stay EXCLUDED server-side; omit without blocking the batch.
+  return {
+    answers: plan.answers,
+    issues: plan.issues.filter((issue) => issue.code !== 'COLLECTION_DISABLED'),
+  };
 }
 /** DOB is separately supplied, never inferred from a preview code or completed onboarding. */
 export function prepareProfile(preview: PreviewAnswers, dateOfBirth: string | null, expectedVersion: number | null) {

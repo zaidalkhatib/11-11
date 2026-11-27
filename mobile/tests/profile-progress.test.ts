@@ -7,8 +7,8 @@ test("profile bars start empty and reflect saved responses",()=>{
  assert.ok(profileProgress(a).every(p=>p.answered===0&&p.percent===0));
  a.name="Alex";
  assert.equal(profileProgress(a)[0].answered,1);
- a.traits=Object.fromEntries(personalityQuestions.map(q=>[q.key,[q.options[0]]]));
- a.phone="+1 555 000 0000";a.energy=3;a.conversations=["Food","Big ideas"];a.chemistry="Easy laughter";
+ a.traits=Object.fromEntries(personalityQuestions.map(q=>{const min="min"in q?q.min:1;return[q.key,q.options.slice(0,min)];}));
+ a.phone="4155550100";a.city="San Diego";a.energy=3;a.conversations=["Food","Big ideas"];a.chemistry="Easy laughter";a.photoUri="preview://photo";
  assert.ok(profileProgress(a).every(p=>p.percent===100));
  delete a.traits.bodyBuild;
  assert.ok(profileProgress(a)[0].percent<100);

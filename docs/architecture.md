@@ -1,12 +1,13 @@
 # 11:11 — Website and cross-platform architecture
 
-Updated 2026-11-08. Read [D-008–D-013](decision-log.md) and the [shared brief](project-brief.md) first. D-014 now authorizes the iOS-first, UI-only app iteration. Expo React Native is used for the local prototype; backend vendors and production-service architecture remain recommendations rather than commitments.
+Updated 2026-11-26. Read [D-008–D-016](decision-log.md) and the [shared brief](project-brief.md) first. D-014 authorizes the iOS-first app UI. D-015 accepts the 88-step local questionnaire. D-016 accepts the isolated Java API as the backend foundation; **client wiring and production data collection remain unauthorized** until Gate 3+ and an explicit connection approval. Expo React Native is used for the local prototype.
 
 ## Scope and sequence
 
-1. Now: an original, responsive website concept that communicates personality-based 1:1 blind dates and arranged experiences. It must be honest about being a preview and must not collect real signup or waitlist information.
-2. Current D-014 iteration: an iOS-first Expo React Native / TypeScript UI in `mobile/`, with web preview for review. Production behavior follows later product and safety decisions.
-3. Later: Android and optional authenticated web journeys as demand and accessibility testing justify them. Do not promise identical release dates or identical UI code.
+1. **Now (D-017):** finish website and mobile **UI**. Launch story: **18+**, **San Diego**, **Dinner only** (other experience types later). Honest preview labeling; no real signup collection or verification work in this phase.
+2. D-014 / D-015 mobile UI: iOS-first Expo React Native / TypeScript in `mobile/`, with web and simulator preview.
+3. Accepted but **deferred** backend foundation (D-016 / D-017): Spring Boot API in `backend/` stays isolated; no active backend feature work or client wiring until the UI phase is done and Gate 3+ are approved.
+4. Later: expand geography and experience types; Android and authenticated web as justified.
 
 The current website lives in `website/` using a Vinext/React/TypeScript starter. Verify exact installed dependencies and scripts in its package manifest rather than treating this document as a version lock. Treat Vinext compatibility, deployment support, maintenance, and upgrade risk as production review items. The React components and pure TypeScript foundations should remain portable if a mature alternative is preferred before launch.
 
@@ -33,15 +34,13 @@ For production, distinguish an authenticated in-app chat from SMS or native iMes
 
 Before real phone enrollment, implement verified account ownership with an approved verification provider, expiry and attempt limits, server validation, anti-abuse rate limits, safe error handling and consent records. A syntactically acceptable phone number is not proof of identity. Restrict account, phone and conversation data by purpose and role, define retention/deletion and notification disclosure, and keep private message content out of routine telemetry. Invitation accept/retry actions need authenticated, idempotent server transitions before they have real consequences.
 
-## Backend recommendation for a real service
+## Backend: as-built foundation and production path
 
-Start with a modular service and relational datastore, not microservices. This is a future recommendation with no selected vendor. Isolate identity, profile/consent, experiences/availability, matching review, date arrangements, notification delivery, and safety/support responsibilities. Build only the modules needed for the first approved journey.
+**Accepted foundation (D-016).** `backend/` is a Spring Boot 4.x / Java 21 Maven service with JDBC + Flyway, local H2 on `127.0.0.1:8080` (PostgreSQL supported, not production-verified here), OIDC JWT default-deny unless `AUTH_ISSUER` is set, public health/questionnaire/events reads, and authenticated `/api/v1/me/*` profile, answers, interests, readiness, timed disclosure, and block/report. Typed TypeScript contracts and a preview adapter live under `backend/contracts/` for tests; they are not imported by `mobile/` or `website/` at runtime. See `backend/docs/` for API, matching coverage, concurrency, and local-integration rules.
 
-Both mobile and authenticated web should consume a versioned API. The server owns authorization, eligibility, match state, disclosure and booking state. Client contracts improve consistency but never replace server validation. Never embed secrets or privileged access in web bundles or the app. Avoid exposing a match's private attributes through client-side filtering.
+**Boundaries.** Production clients must not call this API until Gate 3+ and real OIDC. **D-024** authorizes an explicit `local-dev` profile for simulator wiring only (loopback JWT, seeded dinners, Expo → `127.0.0.1:8080`). Do not treat preview `demoMatched` as server truth; interest is waitlist-only. Production gaps still include real OIDC, verified identity, CORS policy for clients, rate limits, staff roles, account deletion, match/booking/notification write paths, dispatched outbox, CI, backups, and OpenAPI.
 
-Before implementing matching, define the inputs, exclusions, review responsibility, consent and quality measures with the user. A simple auditable workflow with appropriate human review may be more useful than premature machine learning. Do not infer or claim access to 222's algorithm, scientific matching validity, or successful date guarantees.
-
-For side effects, use queued jobs with bounded retries, idempotency keys, deduplication, and delivery-state records. A retry must not create a second booking or disclose information early. Make acceptance and cancellation transitions concurrency-safe. Keep matching and reveal rules testable independently of notification providers.
+**Production recommendation (unchanged intent).** Prefer a modular service and relational datastore over premature microservices. Isolate identity, profile/consent, experiences/availability, matching review, arrangements, notification delivery, and safety/support. Both mobile and authenticated web should eventually consume a versioned API; the server owns authorization and state. Client contracts never replace server validation. Before matching, define inputs, exclusions, review, consent and quality measures with the user. For side effects, use queued jobs with bounded retries, idempotency, and delivery-state records.
 
 ## Privacy and safety boundaries
 
@@ -61,12 +60,12 @@ The website requires type/build checks plus real-browser interaction and accessi
 
 See [validation and launch gates](validation-and-launch-gates.md) for the required evidence and unresolved decisions. “Cross-platform ready” means the architecture separates reusable foundations from platform views; it does not mean iOS has been implemented, tested, or accepted.
 
-## Current mobile implementation · D-014
+## Current mobile implementation · D-014 / D-015
 
 `mobile/` is a separate Expo SDK 58 project using native React Native views, Expo Router navigation, Animated reveals, safe-area context and iOS keyboard avoidance. It is not the marketing website inside a WebView. The browser export uses React Native Web from the same screens.
 
-A pure reducer gates home behind four intro pages, six validated questionnaire steps and review. Back/edit preserve draft answers; review edits return directly to review; reset clears the in-memory session. There is no API, persistent storage, matching model, authentication or booking integration.
+A pure reducer in `src/onboarding.ts` gates home behind four intro pages, an **88-step** questionnaire (name/phone/code plus 82 option-only prompts), sectioned review, and a three-tab local app concept. Back/edit preserve draft answers; reset clears the in-memory session. There is no API call, persistent storage, matching model, real authentication or booking integration. Phone/SMS remain preview-only.
 
-The native theme imports `website/packages/design-tokens/index.ts` directly via a small Metro watch-folder adapter. This intentionally avoids duplicating the palette or migrating the existing website during UI iteration. Promote these source modules to proper workspace packages when that migration is useful.
+The native theme imports `website/packages/design-tokens/index.ts` directly via a small Metro watch-folder adapter. That coupling is fine for local iteration; a standalone or EAS build may need the shared tokens promoted to a proper package (future migration).
 
-The web and iOS Hermes exports pass. The current Mac lacks Xcode/simctl, so no simulator, physical iPhone, VoiceOver, Dynamic Type or native keyboard test is claimed. See `mobile-ui-validation.md`.
+Web and iOS Hermes exports have passed historically. As of 2026-11-26 this Mac has Xcode and simulators (including iPhone 17 Pro); Expo Go on iOS 16.0 simulators fails Expo SDK 58’s minimum (needs ≥16.4). Physical-device VoiceOver / Dynamic Type certification against the current 88-step flow is still outstanding. See `mobile-ui-validation.md` and D-015.

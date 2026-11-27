@@ -8,10 +8,12 @@ import React, {
 } from "react";
 import {
   AccessibilityInfo,
+  Alert,
   Image,
   Animated,
   AppState,
   BackHandler,
+  Easing,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -25,10 +27,11 @@ import {
   View,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { SafeAreaView } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { usePathname, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { color, serif, motion } from "./src/theme";
+import { color, serif, sans, motion } from "./src/theme";
 import {
   Answers,
   Action,
@@ -41,8 +44,10 @@ import {
   initialFlow,
   isComplete,
   isStepValid,
-  QUESTION_COUNT,
-  onboardingOrder,
+  usPhoneWarning,
+  PHOTO_STEP,
+  TRAIT_OFFSET,
+  cityOptions,
   onboardingSections,
   questionSection,
   nextQuestion,
@@ -51,9 +56,34 @@ import {
 
 import { profileProgress } from "./src/profile-progress";
 import { InvitationMessages } from "./src/InvitationMessages";
-import { DateHome, NavIcon, InvitationArt, dateStyles } from "./src/DateHome";
-import { plansReducer, DatePlan, PlanAction } from "./src/date-plans";
+import { InviteEntrance } from "./src/InviteEntrance";
+import { DateHome, NavIcon, InvitationArt, ActiveInvite, InviteCoverPager, dateStyles } from "./src/DateHome";
+import { plansReducer, DatePlan, PlanAction, hasActiveInvite, eventToItinerary, type DinnerItinerary } from "./src/date-plans";
+import {
+  allConditionsAccepted,
+  conditionCheckboxes,
+  conditionDocument,
+  conditionDocuments,
+  type ConditionDocId,
+} from "./src/conditions";
+import {
+  clearSession,
+  createProfileAndAnswers,
+  fetchDinnerEvents,
+  fetchInvitations,
+  leaveEvent,
+  triggerMatcher,
+  tryReturningLogin,
+} from "./src/api";
 
+type InviteEntranceState = { itineraryId: string; title: string; meta: string };
+type HomeTab = "Events" | "Invites" | "You";
+const homeTabOrder: HomeTab[] = ["Events", "Invites", "You"];
+function homeTabFromPath(pathname: string): HomeTab {
+  if (pathname === "/you") return "You";
+  if (pathname === "/invitations") return "Invites";
+  return "Events";
+}
 const FlowContext = createContext<{
   flow: Flow;
   dispatch: React.Dispatch<Action>;
@@ -61,15 +91,74 @@ const FlowContext = createContext<{
   planDispatch: React.Dispatch<PlanAction>;
   saved: boolean;
   setSaved: React.Dispatch<React.SetStateAction<boolean>>;
+  /** Survives /home → /invitations remounts (expo-router). */
+  openedInviteId: string | null;
+  setOpenedInviteId: React.Dispatch<React.SetStateAction<string | null>>;
+  inviteEntrance: InviteEntranceState | null;
+  setInviteEntrance: React.Dispatch<React.SetStateAction<InviteEntranceState | null>>;
+  /** Lets invite details crossfade in as the cinema text exits. */
+  inviteReveal: boolean;
+  setInviteReveal: React.Dispatch<React.SetStateAction<boolean>>;
+  homeTab: HomeTab;
+  setHomeTab: React.Dispatch<React.SetStateAction<HomeTab>>;
 } | null>(null);
 export function FlowProvider({ children }: { children: React.ReactNode }) {
   const [flow, dispatch] = useReducer(flowReducer, undefined, initialFlow);
   const [saved, setSaved] = useState(false);
   const [plans, planDispatch] = useReducer(plansReducer, []);
+  const [openedInviteId, setOpenedInviteId] = useState<string | null>(null);
+  const [inviteEntrance, setInviteEntrance] = useState<InviteEntranceState | null>(null);
+  const [inviteReveal, setInviteReveal] = useState(true);
+  const [homeTab, setHomeTab] = useState<HomeTab>("Events");
   return (
-    <FlowContext.Provider value={{ flow, dispatch, saved, setSaved, plans, planDispatch }}>
+    <FlowContext.Provider value={{
+      flow, dispatch, saved, setSaved, plans, planDispatch,
+      openedInviteId, setOpenedInviteId, inviteEntrance, setInviteEntrance,
+      inviteReveal, setInviteReveal,
+      homeTab, setHomeTab,
+    }}>
       {children}
     </FlowContext.Provider>
+  );
+}
+
+/** Lives in root layout so route remounts / system Modals cannot flash white. */
+export function InviteEntranceHost() {
+  const ctx = useContext(FlowContext);
+  const reduce = useGentleMotion();
+  const [holdScrim, setHoldScrim] = useState(true);
+  if (!ctx?.inviteEntrance) return null;
+  const { inviteEntrance, setInviteEntrance, setInviteReveal } = ctx;
+  return (
+    <View
+      pointerEvents="auto"
+      style={{
+        position: "absolute",
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        zIndex: 200,
+        elevation: 200,
+        // Opaque until the cinema begins exiting so the Invites panel never flashes through.
+        backgroundColor: holdScrim ? color.background : "transparent",
+      }}
+    >
+      <InviteEntrance
+        key={inviteEntrance.itineraryId}
+        title={inviteEntrance.title}
+        meta={inviteEntrance.meta}
+        reduce={reduce === true}
+        onExitStart={() => {
+          setHoldScrim(false);
+          setInviteReveal(true);
+        }}
+        onDone={() => {
+          setInviteEntrance(null);
+          setHoldScrim(true);
+        }}
+      />
+    </View>
   );
 }
 const homeRoutes = {
@@ -95,10 +184,10 @@ const intros = [
   },
   {
     label: "02 / TWO PEOPLE. ONE SHARED PLAN.",
-    title: ["A table for two.", "Or a little adventure."],
+    title: ["A table for two.", "One shared plan."],
     accent: 1,
-    body: "A 1:1 blind date, built around an experience you can share.",
-    foot: "The idea is simple: less planning, more being there.",
+    body: "A 1:1 blind dinner date, built around an evening you can share.",
+    foot: "* More experiences may come later.",
   },
   {
     label: "03 / BEFORE THE FIRST HELLO",
@@ -109,9 +198,10 @@ const intros = [
   },
 ];
 const questions = [
+  { label: "YOUR NUMBER", title: "What’s your number?", helper: "We’ll use this to sign you in next time. Enter a valid US phone number." },
   { label: "A FIRST HELLO", title: "What should we call you?", helper: "A first name or nickname is perfect." },
-  { label: "YOUR NUMBER", title: "Stay in the loop.", helper: "Phone number preview. Leave blank to try the flow without personal data." },
-  { label: "CODE PREVIEW", title: "A little confirmation.", helper: "In the finished app, you would enter a text-message code here. No code has been sent. Tap Next to continue." },
+  { label: "YOUR CITY", title: "Where are you based?", helper: "The place you call home right now." },
+  { label: "CODE PREVIEW", title: "A little confirmation.", helper: "In the finished app, you would enter a text-message code here. If you already have an account, we’ll bring you back in. No code has been sent yet." },
   { label: "YOUR SOCIAL RHYTHM", title: "Around someone new, you tend to…", helper: "Think about your natural rhythm before you feel completely at ease." },
   { label: "THE GOOD CONVERSATIONS", title: "What makes you lose track of time?", helper: "The topics you could happily talk about for hours. Pick two or three." },
   { label: "A LITTLE CHEMISTRY", title: "What draws you closer?", helper: "Think about the feeling that makes you want a second date." },
@@ -223,8 +313,38 @@ function Reveal({
 function Brand({ small = false }: { small?: boolean }) {
   return (
     <View accessible accessibilityLabel="11:11" style={s.brandWrap}>
-      <Text style={[s.brand, small && s.brandSmall]}>11:11</Text>
+      <Text style={[s.brand, small && s.brandSmall]}>
+        11<Text style={s.brandColon}>:</Text>11
+      </Text>
       <Text style={s.brandSpark}>✧</Text>
+    </View>
+  );
+}
+/** Back arrow on the left, 11:11 on the right for every onboarding screen. */
+function ScreenHeader({
+  onBack,
+  showBack = true,
+  smallBrand = true,
+}: {
+  onBack?: () => void;
+  showBack?: boolean;
+  smallBrand?: boolean;
+}) {
+  return (
+    <View style={s.questionTop}>
+      {showBack && onBack ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Previous step"
+          onPress={onBack}
+          style={s.backButton}
+        >
+          <Text style={s.backArrow}>←</Text>
+        </Pressable>
+      ) : (
+        <View style={s.backButton} />
+      )}
+      <Brand small={smallBrand} />
     </View>
   );
 }
@@ -320,21 +440,7 @@ function Intro({
   const compact = useWindowDimensions().width < 350;
   return (
     <>
-      <View style={s.topBar}>
-        <Brand />
-        {index > 0 ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Previous introduction"
-            onPress={back}
-            style={s.textButton}
-          >
-            <Text style={s.mutedButton}>Back</Text>
-          </Pressable>
-        ) : (
-          <Text style={s.preview}>UI PREVIEW</Text>
-        )}
-      </View>
+      <ScreenHeader onBack={back} showBack={index > 0} smallBrand={false} />
       <ScrollView
         contentContainerStyle={[
           s.introScroll,
@@ -396,11 +502,6 @@ function Intro({
           }
           onPress={next}
         />
-        <Text style={s.bottomNote}>
-          {index === 3
-            ? `${QUESTION_COUNT} questions · your own pace`
-            : "A first hello, without the rush."}
-        </Text>
       </View>
     </>
   );
@@ -416,51 +517,74 @@ function SectionComplete({ question, next, back, reduce }: { question:number; ne
     "Attraction":"Next, a little about attraction. There is no right answer, and you can opt out of rating yourself.",
     "Love & connection":"Finally, how you connect and what you hope to find."
   };
-  return <><View style={s.questionTop}><Pressable accessibilityRole="button" accessibilityLabel="Back to the last question" onPress={back} style={s.backButton}><Text style={s.backArrow}>←</Text></Pressable><Brand small/></View><ScrollView contentContainerStyle={[s.questionScroll,{flexGrow:1,justifyContent:"center"}]}><Reveal reduce={reduce}><Text style={s.eyebrow}>SECTION {onboardingSections.indexOf(section as typeof onboardingSections[number])+1} COMPLETE</Text><Text style={s.questionTitle}>{section}.{"\n"}A little more you.</Text><Text style={s.helper}>{following ? descriptions[following] : "Your introduction is ready. Take a moment to review it before stepping inside."}</Text><Text style={s.inputNote}>Your answers are kept as you continue. You can revisit them.</Text></Reveal></ScrollView><View style={s.questionBottom}><Button label={following ? "Next: "+following : "Review my introduction"} onPress={next}/></View></>;
+  return <><ScreenHeader onBack={back}/><ScrollView contentContainerStyle={[s.questionScroll,{flexGrow:1,justifyContent:"center"}]}><Reveal reduce={reduce}><Text style={s.eyebrow}>SECTION {onboardingSections.indexOf(section as typeof onboardingSections[number])+1} COMPLETE</Text><Text style={s.questionTitle}>{section}.{"\n"}A little more you.</Text><Text style={s.helper}>{following ? descriptions[following] : "Your introduction is ready. Take a moment to review it before stepping inside."}</Text><Text style={s.inputNote}>Your answers are kept as you continue. You can revisit them.</Text></Reveal></ScrollView><View style={s.questionBottom}><Button label={following ? "Next: "+following : "Review my introduction"} onPress={next}/></View></>;
 }
 function Questionnaire({ index, answers, patch, next, back, reduce }: { index: number; answers: Answers; patch: (patch: Partial<Answers>) => void; next: () => void; back: () => void; reduce: boolean }) {
   const [code, setCode] = useState("");
-  const trait = personalityQuestions[index - 6];
-  const q = trait ? { label: trait.section.toUpperCase(), title: trait.title, helper: questionHelper(trait) } : questions[index];
+  const [photoError, setPhotoError] = useState("");
+  const [picking, setPicking] = useState(false);
+  const trait = index === PHOTO_STEP || index < TRAIT_OFFSET ? undefined : personalityQuestions[index - TRAIT_OFFSET];
+  const q = index === PHOTO_STEP
+    ? { label: "YOUR PHOTO", title: "Add a photo of you.", helper: "A clear photo helps your introduction feel real. It stays in this preview only." }
+    : trait ? { label: trait.section.toUpperCase(), title: trait.title, helper: questionHelper(trait) } : questions[index];
   const valid = isStepValid(index, answers);
-  const optional = trait && "optional" in trait && trait.optional;
   const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
   useEffect(()=>{ scroll.current?.scrollTo({ y:0, animated:false }); },[index]);
+  const choosePhoto = async () => {
+    if (picking) return;
+    setPicking(true); setPhotoError("");
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.8 });
+      if (!result.canceled && result.assets[0]) patch({ photoUri: result.assets[0].uri });
+    } catch { setPhotoError("Couldn’t open photos. Please try again."); }
+    finally { setPicking(false); }
+  };
   return <>
-    <View style={s.questionTop}><Pressable accessibilityRole="button" accessibilityLabel="Previous step" onPress={back} style={s.backButton}><Text style={s.backArrow}>←</Text></Pressable><Brand small/><Text style={s.stepCount}>{String(onboardingOrder.indexOf(index)+1).padStart(2,"0")} <Text style={s.countMuted}>/ {QUESTION_COUNT}</Text></Text></View>
-    <View accessibilityRole="progressbar" accessibilityValue={{min:0,max:QUESTION_COUNT,now:onboardingOrder.indexOf(index)+1}} style={s.progressTrack}><View style={[s.progressFill,{width:`${(onboardingOrder.indexOf(index)+1)/QUESTION_COUNT*100}%`}]}/></View>
-    <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" contentContainerStyle={s.questionScroll}><Reveal key={index} reduce={reduce}><Text style={s.eyebrow}>{q.label}</Text><Text style={s.questionTitle}>{q.title}</Text><Text style={s.helper}>{q.helper}</Text><View style={s.answerArea}>
-      {index===0&&<TextInput accessibilityLabel="First name or nickname" value={answers.name} onChangeText={name=>patch({name})} placeholder="Your first name" placeholderTextColor={color.muted} style={s.nameInput} maxLength={30}/>}
-      {index===1&&<><TextInput accessibilityLabel="Phone number preview" value={answers.phone??""} onChangeText={phone=>patch({phone})} placeholder="+1 (555) 000-0000" placeholderTextColor={color.muted} keyboardType="phone-pad" autoComplete="off" style={s.nameInput} maxLength={24}/><Text style={s.inputNote}>Local preview only. Nothing is sent or verified.</Text></>}
-      {index===2&&<TextInput accessibilityLabel="Demo confirmation code" value={code} onChangeText={value=>setCode(value.replace(/\D/g,""))} placeholder="000000" placeholderTextColor={color.muted} keyboardType="number-pad" autoComplete="off" style={[s.nameInput,{letterSpacing:8}]} maxLength={6}/>}
-      {index===3&&energyLabels.map((v,i)=><Choice key={v} label={v} role="radio" selected={answers.energy===i+1} onPress={()=>patch({energy:i+1})}/>)}
-      {index===4&&conversations.map(v=><Choice key={v} label={v} selected={answers.conversations.includes(v)} onPress={()=>patch({conversations:toggleChoice(answers.conversations,v,3)})}/>)}
-      {index===5&&chemistryOptions.map(v=><Choice key={v} label={v} role="radio" selected={answers.chemistry===v} onPress={()=>patch({chemistry:v})}/>)}
+    <ScreenHeader onBack={back} />
+    <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" contentContainerStyle={s.questionScroll}><Reveal key={index} reduce={reduce}><Text style={s.eyebrow}>{q.label}</Text><Text style={s.questionTitle}>{q.title}</Text>{!!q.helper&&<Text style={s.helper}>{q.helper}</Text>}<View style={s.answerArea}>
+      {index===0&&<><TextInput accessibilityLabel="US phone number" value={answers.phone??""} onChangeText={phone=>patch({phone})} placeholder="(415) 555-0100" placeholderTextColor={color.muted} keyboardType="phone-pad" autoComplete="tel" textContentType="telephoneNumber" style={s.nameInput} maxLength={16}/><Text style={[s.inputNote, usPhoneWarning(answers.phone??"") ? { color: color.accent } : null]}>{usPhoneWarning(answers.phone??"") ?? "US number · used to find your account next time."}</Text></>}
+      {index===1&&<TextInput accessibilityLabel="First name or nickname" value={answers.name} onChangeText={name=>patch({name})} placeholder="Your first name" placeholderTextColor={color.muted} autoComplete="given-name" textContentType="givenName" style={s.nameInput} maxLength={30}/>}
+      {index===2&&cityOptions.map(city=><Choice key={city} label={city} role="radio" selected={answers.city===city} onPress={()=>patch({city})}/>)}
+      {index===3&&<TextInput accessibilityLabel="Demo confirmation code" value={code} onChangeText={value=>setCode(value.replace(/\D/g,""))} placeholder="000000" placeholderTextColor={color.muted} keyboardType="number-pad" autoComplete="off" style={[s.nameInput,{letterSpacing:8}]} maxLength={6}/>}
+      {index===4&&energyLabels.map((v,i)=><Choice key={v} label={v} role="radio" selected={answers.energy===i+1} onPress={()=>patch({energy:i+1})}/>)}
+      {index===5&&conversations.map(v=><Choice key={v} label={v} selected={answers.conversations.includes(v)} onPress={()=>patch({conversations:toggleChoice(answers.conversations,v,3)})}/>)}
+      {index===6&&chemistryOptions.map(v=><Choice key={v} label={v} role="radio" selected={answers.chemistry===v} onPress={()=>patch({chemistry:v})}/>)}
+      {index===PHOTO_STEP&&<View style={s.photoStep}>
+        <Pressable accessibilityRole="button" accessibilityLabel={answers.photoUri ? "Change your photo" : "Add your photo"} disabled={picking} onPress={choosePhoto} style={[s.profilePhoto, answers.photoUri ? s.profilePhotoFilled : null]}>
+          {answers.photoUri ? <Image source={{ uri: answers.photoUri }} style={s.profileImage} /> : <Text style={s.photoPlaceholder}>＋</Text>}
+        </Pressable>
+        <Pressable accessibilityRole="button" onPress={choosePhoto} disabled={picking} style={s.textButton}>
+          <Text style={s.edit}>{picking ? "Opening photos…" : answers.photoUri ? "Change photo" : "Choose a photo"}</Text>
+        </Pressable>
+        {!!photoError && <Text style={[s.helper, { textAlign: "center" }]}>{photoError}</Text>}
+      </View>}
       {trait&&<TraitChoices question={trait} values={answers.traits?.[trait.key]??[]} onChange={values=>patch({traits:{...answers.traits,[trait.key]:values}})}/>}
     </View></Reveal></ScrollView>
-    <View style={s.questionBottom}><Button label={index===1||index===2?"Next":optional&&!(answers.traits?.[trait.key]?.length)?"Skip for now":nextQuestion(index)===undefined?"Finish this section":"Continue"} disabled={!valid} onPress={next}/><Text style={s.bottomNote}>Your answers stay in this preview only.</Text></View>
+    <View style={s.questionBottom}><Button label={index===PHOTO_STEP?(valid?"Continue":"Add a photo to continue"):index===0||index===2||index===3?"Next":nextQuestion(index)===undefined?"Finish this section":"Continue"} disabled={!valid} onPress={next}/></View>
   </>;
 }
 type TraitQuestion = (typeof personalityQuestions)[number];
 function TraitChoices({ question, values, onChange }: { question: TraitQuestion; values: string[]; onChange: (values: string[]) => void }) {
   const maximum = "max" in question ? question.max : 1;
-  if (question.key === "height") return <View style={{height:242,borderWidth:1,borderColor:color.line,borderRadius:20,overflow:"hidden"}}><ScrollView nestedScrollEnabled showsVerticalScrollIndicator contentOffset={{x:0,y:Math.max(0,question.options.indexOf(values[0])-2)*48}}>{question.options.map(option=><Pressable key={option} accessibilityRole="radio" accessibilityState={{checked:values.includes(option)}} onPress={()=>onChange([option])} style={{height:48,alignItems:"center",justifyContent:"center",backgroundColor:values.includes(option)?color.surfaceRaised:"transparent"}}><Text style={{fontFamily:serif,fontSize: 15,color:values.includes(option)?color.accent:color.ink}}>{option}{values.includes(option)?" ✓":""}</Text></Pressable>)}</ScrollView></View>;
+  if (question.key === "height" || question.key === "age") return <View style={{height:242,borderWidth:1,borderColor:color.line,borderRadius:20,overflow:"hidden"}}><ScrollView nestedScrollEnabled showsVerticalScrollIndicator contentOffset={{x:0,y:Math.max(0,question.options.indexOf(values[0])-2)*48}}>{question.options.map(option=><Pressable key={option} accessibilityRole="radio" accessibilityState={{checked:values.includes(option)}} onPress={()=>onChange([option])} style={{height:48,alignItems:"center",justifyContent:"center",backgroundColor:values.includes(option)?color.surfaceRaised:"transparent"}}><Text style={{fontFamily:serif,fontSize: 15,color:values.includes(option)?color.accent:color.ink}}>{option}</Text></Pressable>)}</ScrollView></View>;
 
   return <View style={s.chips}>{question.options.map(option => {
     const selected = values.includes(option);
     const disabled = !selected && values.length >= maximum && maximum > 1;
-    return <Pressable key={option} accessibilityRole={maximum === 1 ? "radio" : "checkbox"} accessibilityLabel={option} accessibilityState={{ checked: selected, disabled }} disabled={disabled} onPress={() => onChange(maximum === 1 || option === "Prefer not to say" ? [option] : toggleChoice(values.filter(v=>v!=="Prefer not to say"), option, maximum))} style={[s.chip, selected && s.chipSelected, disabled && { opacity: 0.4 }]}><Text style={[s.chipText, selected && { color: color.ink }]}>{option}{selected ? " ✓" : ""}</Text></Pressable>;
+    return <Pressable key={option} accessibilityRole={maximum === 1 ? "radio" : "checkbox"} accessibilityLabel={option} accessibilityState={{ checked: selected, disabled }} disabled={disabled} onPress={() => onChange(maximum === 1 ? [option] : toggleChoice(values, option, maximum))} style={[s.chip, selected && s.chipSelected, disabled && { opacity: 0.4 }]}><Text style={[s.chipText, selected && { color: color.ink }]}>{option}</Text></Pressable>;
   })}</View>;
 }
 const sections = ["The basics", "Personality", "Beliefs & values", "Your world", "Attraction", "Love & connection"];
 function answerRows(answers: Answers) {
   return [
-    { section: "The basics", label: "Name", value: answers.name, index: 0 },
-    { section: "The basics", label: "Phone · not verified", value: answers.phone ? "••• " + answers.phone.slice(-4) : "Not provided", index: 1 },
-    { section: "Personality", label: "Social energy", value: energyLabels[(answers.energy ?? 3) - 1], index: 3 },
-    { section: "Personality", label: "Conversation", value: answers.conversations.join(" · "), index: 4 },
-    { section: "Love & connection", label: "Chemistry", value: answers.chemistry, index: 5 },
-    ...personalityQuestions.map((q, i) => ({ section: q.section, label: q.title, value: (answers.traits?.[q.key] ?? []).join(" · ") || "Not answered yet", index: i + 6 })),
+    { section: "The basics", label: "Phone · not verified", value: answers.phone ? "••• " + answers.phone.slice(-4) : "Not provided", index: 0 },
+    { section: "The basics", label: "Name", value: answers.name, index: 1 },
+    { section: "The basics", label: "City", value: answers.city || "Not answered yet", index: 2 },
+    { section: "Personality", label: "Social energy", value: energyLabels[(answers.energy ?? 3) - 1], index: 4 },
+    { section: "Personality", label: "Conversation", value: answers.conversations.join(" · "), index: 5 },
+    { section: "Love & connection", label: "Chemistry", value: answers.chemistry, index: 6 },
+    ...personalityQuestions.map((q, i) => ({ section: q.section, label: q.title, value: (answers.traits?.[q.key] ?? []).join(" · ") || "Not answered yet", index: i + TRAIT_OFFSET })),
+    { section: "Love & connection", label: "Photo", value: answers.photoUri ? "Added" : "Required", index: PHOTO_STEP },
   ];
 }
 function Summary({ answers, edit }: { answers: Answers; edit: (index: number) => void }) {
@@ -474,14 +598,14 @@ function ProfileSections({answers,open}:{answers:Answers;open:(section:string)=>
   const answered=progress.reduce((sum,p)=>sum+p.answered,0);
   const total=progress.reduce((sum,p)=>sum+p.total,0);
   return <View style={{gap:16}}>
-    <View style={{flexDirection:"row",alignItems:"center",justifyContent:"space-between"}}><Text style={{fontFamily:serif,fontSize: 18,color:color.ink}}>Your introduction</Text><Text style={{color:color.accent,fontSize: 15}}>{Math.round(answered/total*100)}%</Text></View>
+    <View style={{flexDirection:"row",alignItems:"center",justifyContent:"space-between"}}><Text style={{fontFamily:serif,fontSize: 18,color:color.ink}}>You</Text><Text style={{color:color.accent,fontFamily:serif,fontSize: 15}}>{Math.round(answered/total*100)}%</Text></View>
     <View style={{flexDirection:"row",flexWrap:"wrap",justifyContent:"space-between",gap:12}}>
       {progress.map((item,i)=><Pressable key={item.section} accessibilityRole="button" accessibilityLabel={`${item.section}, ${item.answered} of ${item.total} answered. Edit section`} onPress={()=>open(item.section)} style={{width:i%3===2?"100%":"48%",minHeight:i%3===2?142:178,borderWidth:1,borderColor:color.line,borderRadius:24,padding:18,backgroundColor:color.surface,justifyContent:"space-between"}}>
         <View accessible={false} style={{height:i%3===2?45:78,alignItems:"center",justifyContent:"center"}}>
           <View style={{width:45+i*3,height:45,borderWidth:1,borderColor:color.accent,borderRadius:i%2?24:6,transform:[{rotate:`${i*15}deg`}]}}/>
           <View style={{position:"absolute",width:24,height:24,borderWidth:1,borderColor:color.ink,borderRadius:14,transform:[{translateX:12},{translateY:-5}]}}/>
         </View>
-        <Text style={{fontFamily:serif,fontSize: 14,color:color.ink,marginTop:12}}>{item.section}</Text>
+        <Text style={{fontFamily:serif,fontSize: 16,color:color.ink,marginTop:12}}>{item.section}</Text>
         <View accessibilityRole="progressbar" accessibilityLabel={item.section+" answers"} accessibilityValue={{min:0,max:item.total,now:item.answered}} style={{height:3,borderRadius:2,backgroundColor:color.line,marginTop:12,overflow:"hidden"}}><View style={{width:`${item.percent}%`,height:3,backgroundColor:color.accent}}/></View>
       </Pressable>)}
     </View>
@@ -502,7 +626,16 @@ function ProfileEditor({ answers, patch }: { answers: Answers; patch: (patch: Pa
     } catch { setPhotoError("Couldn’t open photos. Please try again."); }
     finally { setPicking(false); }
   };
-  const trait = editing === null ? undefined : personalityQuestions[editing - 6];
+  const trait = editing === null || editing === PHOTO_STEP || editing < TRAIT_OFFSET ? undefined : personalityQuestions[editing - TRAIT_OFFSET];
+  const editPhoto = async () => {
+    if (picking) return;
+    setPicking(true); setPhotoError("");
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.8 });
+      if (!result.canceled && result.assets[0]) setDraft({ ...draft, photoUri: result.assets[0].uri });
+    } catch { setPhotoError("Couldn’t open photos. Please try again."); }
+    finally { setPicking(false); }
+  };
   return <>
     <View style={s.profileHero}>
       <Pressable accessibilityRole="button" accessibilityLabel="Choose your profile photo" disabled={picking} onPress={choosePhoto} style={s.profilePhoto}>
@@ -511,32 +644,73 @@ function ProfileEditor({ answers, patch }: { answers: Answers; patch: (patch: Pa
       <Text style={s.homeTitle}>{answers.name.trim()}</Text>
       <Pressable accessibilityRole="button" onPress={choosePhoto} disabled={picking} style={s.textButton}><Text style={s.edit}>{picking ? "Opening photos…" : answers.photoUri ? "Change photo" : "Add your photo"}</Text></Pressable>
       {!!photoError && <Text style={s.helper}>{photoError}</Text>}
-      <Text style={s.helper}>A few pieces of what makes you, you.</Text>
     </View>
-    {sectionOpen ? <View>
-      <Pressable accessibilityRole="button" onPress={()=>setSectionOpen(null)} style={s.textButton}><Text style={s.mutedButton}>← All sections</Text></Pressable>
-      <Text style={[s.sectionTitle,{marginTop:16}]}>{sectionOpen}</Text>
-      {answerRows(answers).filter(row=>row.section===sectionOpen).map(row=><Pressable key={row.index} accessibilityRole="button" accessibilityLabel={`Edit ${row.label}: ${row.value}`} onPress={()=>{setDraft(answers);setEditing(row.index);}} style={s.summaryRow}><View style={s.summaryCopy}><Text style={s.summaryLabel}>{row.label}</Text><Text style={s.summaryValue}>{row.value}</Text></View><Text style={s.edit}>Edit</Text></Pressable>)}
-    </View> : <ProfileSections answers={answers} open={setSectionOpen}/>}
+    <ProfileSections answers={answers} open={setSectionOpen}/>
 
-    <Modal visible={editing !== null} animationType="slide" onRequestClose={() => setEditing(null)}>
-      <SafeAreaView style={[s.safe, { backgroundColor: color.background }]}>
-        <View style={s.questionTop}><Pressable accessibilityRole="button" onPress={() => setEditing(null)} style={s.textButton}><Text style={s.mutedButton}>Cancel</Text></Pressable><Brand small /></View>
-        <ScrollView contentContainerStyle={s.questionScroll}>
-          <Text style={s.eyebrow}>EDIT YOUR INTRODUCTION</Text>
-          <Text style={s.questionTitle}>{trait?.title ?? (editing === null ? "" : questions[editing]?.title)}</Text>
-          <View style={s.answerArea}>
-          {editing === 0 && <TextInput accessibilityLabel="First name" value={draft.name} onChangeText={name => setDraft({ ...draft, name })} style={s.nameInput} maxLength={30} />}
-          {editing === 1 && <TextInput accessibilityLabel="Phone number preview" value={draft.phone??""} onChangeText={phone=>setDraft({...draft,phone})} keyboardType="phone-pad" style={s.nameInput} maxLength={24}/>}
-          {editing === 3 && energyLabels.map((v, i) => <Choice key={v} label={v} role="radio" selected={draft.energy === i + 1} onPress={() => setDraft({ ...draft, energy: i + 1 })} />)}
-          {editing === 4 && <><Text style={s.helper}>The topics you could happily talk about for hours. Pick two or three.</Text>{conversations.map(v => <Choice key={v} label={v} selected={draft.conversations.includes(v)} onPress={() => setDraft({ ...draft, conversations: toggleChoice(draft.conversations, v, 3) })} />)}</>}
-          {editing === 5 && chemistryOptions.map(v => <Choice key={v} label={v} role="radio" selected={draft.chemistry === v} onPress={() => setDraft({ ...draft, chemistry: v })} />)}
-          {trait && <Text style={s.helper}>{questionHelper(trait)}</Text>}
-          {trait && <TraitChoices question={trait} values={draft.traits?.[trait.key] ?? []} onChange={values => setDraft({ ...draft, traits: { ...draft.traits, [trait.key]: values } })} />}
-          </View>
-        </ScrollView>
-        <View style={s.questionBottom}><Button label="Save changes" disabled={editing === null || !isStepValid(editing, draft)} onPress={() => { patch(draft); setEditing(null); }} /></View>
-      </SafeAreaView>
+    <Modal
+      visible={sectionOpen !== null}
+      animationType="slide"
+      onRequestClose={() => {
+        if (editing !== null) setEditing(null);
+        else setSectionOpen(null);
+      }}
+    >
+      <SafeAreaProvider>
+        <SafeAreaView style={[s.safe, { backgroundColor: color.background }]} edges={["top", "bottom"]}>
+          {editing === null ? (
+            <>
+              <ScreenHeader onBack={() => setSectionOpen(null)} />
+              <ScrollView contentContainerStyle={s.homeScroll} keyboardShouldPersistTaps="handled">
+                <Text style={[s.sectionTitle, { marginBottom: 8 }]}>{sectionOpen}</Text>
+                {answerRows(answers).filter(row => row.section === sectionOpen).map(row => (
+                  <Pressable
+                    key={row.index}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Edit ${row.label}: ${row.value}`}
+                    onPress={() => { setDraft(answers); setEditing(row.index); }}
+                    style={s.summaryRow}
+                  >
+                    <View style={s.summaryCopy}>
+                      <Text style={s.summaryLabel}>{row.label}</Text>
+                      <Text style={s.summaryValue}>{row.value}</Text>
+                    </View>
+                    <Text style={s.edit}>Edit</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </>
+          ) : (
+            <>
+              <ScreenHeader onBack={() => setEditing(null)} />
+              <ScrollView contentContainerStyle={s.questionScroll} keyboardShouldPersistTaps="handled">
+                <Text style={s.eyebrow}>EDIT YOUR INTRODUCTION</Text>
+                <Text style={s.questionTitle}>{editing === PHOTO_STEP ? "Your photo" : trait?.title ?? questions[editing]?.title}</Text>
+                <View style={s.answerArea}>
+                  {editing === 0 && <TextInput accessibilityLabel="Phone number preview" value={draft.phone??""} onChangeText={phone=>setDraft({...draft,phone})} keyboardType="phone-pad" style={s.nameInput} maxLength={24}/>}
+                  {editing === 1 && <TextInput accessibilityLabel="First name" value={draft.name} onChangeText={name => setDraft({ ...draft, name })} style={s.nameInput} maxLength={30} />}
+                  {editing === 2 && cityOptions.map(city => <Choice key={city} label={city} role="radio" selected={draft.city === city} onPress={() => setDraft({ ...draft, city })} />)}
+                  {editing === 4 && energyLabels.map((v, i) => <Choice key={v} label={v} role="radio" selected={draft.energy === i + 1} onPress={() => setDraft({ ...draft, energy: i + 1 })} />)}
+                  {editing === 5 && <><Text style={s.helper}>The topics you could happily talk about for hours. Pick two or three.</Text>{conversations.map(v => <Choice key={v} label={v} selected={draft.conversations.includes(v)} onPress={() => setDraft({ ...draft, conversations: toggleChoice(draft.conversations, v, 3) })} />)}</>}
+                  {editing === 6 && chemistryOptions.map(v => <Choice key={v} label={v} role="radio" selected={draft.chemistry === v} onPress={() => setDraft({ ...draft, chemistry: v })} />)}
+                  {editing === PHOTO_STEP && <View style={s.photoStep}>
+                    <Pressable accessibilityRole="button" accessibilityLabel="Choose your photo" disabled={picking} onPress={editPhoto} style={[s.profilePhoto, draft.photoUri ? s.profilePhotoFilled : null]}>
+                      {draft.photoUri ? <Image source={{ uri: draft.photoUri }} style={s.profileImage} /> : <Text style={s.photoPlaceholder}>＋</Text>}
+                    </Pressable>
+                    <Pressable accessibilityRole="button" onPress={editPhoto} disabled={picking} style={s.textButton}>
+                      <Text style={s.edit}>{picking ? "Opening photos…" : draft.photoUri ? "Change photo" : "Choose a photo"}</Text>
+                    </Pressable>
+                  </View>}
+                  {trait && <Text style={s.helper}>{questionHelper(trait)}</Text>}
+                  {trait && <TraitChoices question={trait} values={draft.traits?.[trait.key] ?? []} onChange={values => setDraft({ ...draft, traits: { ...draft.traits, [trait.key]: values } })} />}
+                </View>
+              </ScrollView>
+              <View style={s.questionBottom}>
+                <Button label="Save changes" disabled={!isStepValid(editing, draft)} onPress={() => { patch(draft); setEditing(null); }} />
+              </View>
+            </>
+          )}
+        </SafeAreaView>
+      </SafeAreaProvider>
     </Modal>
   </>;
 }
@@ -555,18 +729,7 @@ function Review({
 }) {
   return (
     <>
-      <View style={s.questionTop}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Previous step"
-          onPress={back}
-          style={s.backButton}
-        >
-          <Text style={s.backArrow}>←</Text>
-        </Pressable>
-        <Brand small />
-        <Text style={s.preview}>YOUR INTRO</Text>
-      </View>
+      <ScreenHeader onBack={back} />
       <ScrollView contentContainerStyle={s.reviewScroll}>
         <Reveal reduce={reduce}>
           <Text style={s.eyebrow}>A LITTLE PORTRAIT OF YOU</Text>
@@ -582,35 +745,467 @@ function Review({
       </ScrollView>
       <View style={s.questionBottom}>
         <Button
-          label="Enter 11:11"
+          label="Continue to conditions"
           onPress={next}
           disabled={!isComplete(answers)}
         />
-        <Text style={s.bottomNote}>
-          UI preview only · no account or match created
-        </Text>
       </View>
     </>
   );
 }
+function Conditions({
+  accepted,
+  toggle,
+  next,
+  back,
+  reduce,
+  answers,
+}: {
+  accepted: Record<string, boolean>;
+  toggle: (id: string) => void;
+  next: () => void;
+  back: () => void;
+  reduce: boolean;
+  answers: Answers;
+}) {
+  const [docId, setDocId] = useState<ConditionDocId | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const ready = allConditionsAccepted(accepted);
+  const openDoc = docId ? conditionDocument(docId) : null;
+  const createProfile = async () => {
+    if (saving) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const result = await createProfileAndAnswers(answers);
+      if (result.state === "acknowledged") {
+        next();
+        return;
+      }
+      if (result.state === "blocked") {
+        if ("issues" in result && Array.isArray(result.issues) && result.issues.length) {
+          const summary = result.issues
+            .slice(0, 4)
+            .map((issue: { questionId: string; code: string }) => `${issue.questionId}:${issue.code}`)
+            .join(", ");
+          setSaveError(`Could not map answers (${summary}).`);
+        } else {
+          const code = "code" in result ? result.code : "BLOCKED";
+          setSaveError(`Could not prepare profile (${code}). Check answers and try again.`);
+        }
+      } else if (result.state === "incomplete") {
+        setSaveError("Some answers did not save. Retry after the API is ready.");
+      } else if (result.state === "conflict") {
+        setSaveError(`Save conflict (${result.code}). Pull to refresh profile state, then try again.`);
+      } else if (result.state === "unauthorized" || result.state === "rejected" || result.state === "unconfirmed") {
+        setSaveError(`Save failed (${result.code}). Check local-dev API on 127.0.0.1:8080.`);
+      } else {
+        setSaveError("Save failed. Is local-dev API running on 127.0.0.1:8080?");
+      }
+    } catch {
+      setSaveError("Cannot reach the API. Start local-dev backend, then retry.");
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <>
+      <ScreenHeader onBack={back} />
+      <ScrollView contentContainerStyle={s.reviewScroll} keyboardShouldPersistTaps="handled">
+        <Reveal reduce={reduce}>
+          <Text style={s.eyebrow}>BEFORE YOU CONTINUE</Text>
+          <Text accessibilityRole="header" style={s.questionTitle}>
+            Conditions.
+          </Text>
+          <Text style={s.helper}>
+            Tick every box to create your profile. Open each document, read it, and accept only if you agree.
+          </Text>
+          <View style={{ marginTop: 22, gap: 10 }}>
+            {conditionCheckboxes.map((item) => {
+              const checked = !!accepted[item.id];
+              return (
+                <View key={item.id} style={s.conditionRow}>
+                  <Pressable
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked }}
+                    accessibilityLabel={item.label}
+                    onPress={() => toggle(item.id)}
+                    style={s.conditionCheckHit}
+                  >
+                    <View style={[s.conditionBox, checked && s.conditionBoxOn]}>
+                      {checked ? <Text style={s.conditionTick}>✓</Text> : null}
+                    </View>
+                    <Text style={s.conditionLabel}>{item.label}</Text>
+                  </Pressable>
+                  {item.docId ? (
+                    <Pressable
+                      accessibilityRole="link"
+                      accessibilityLabel={`Read ${conditionDocument(item.docId).title}`}
+                      onPress={() => setDocId(item.docId!)}
+                      style={s.textButton}
+                    >
+                      <Text style={s.edit}>Read</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              );
+            })}
+          </View>
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="Open all conditions documents"
+            onPress={() => setDocId("terms")}
+            style={[s.textButton, { marginTop: 18 }]}
+          >
+            <Text style={s.edit}>View all conditions pages</Text>
+          </Pressable>
+          <Text style={s.inputNote}>
+            Fill company, address, website, and email placeholders before launch. Have counsel review.
+          </Text>
+          {saveError ? <Text style={[s.helper, { color: color.accent, marginTop: 16 }]}>{saveError}</Text> : null}
+        </Reveal>
+      </ScrollView>
+      <View style={s.questionBottom}>
+        <Button
+          label={saving ? "Creating profile…" : "Create my profile"}
+          onPress={createProfile}
+          disabled={!ready || saving}
+        />
+      </View>
+      <Modal visible={openDoc !== null} animationType="slide" onRequestClose={() => setDocId(null)}>
+        <SafeAreaProvider>
+          <SafeAreaView style={[s.safe, { backgroundColor: color.background }]} edges={["top", "bottom"]}>
+            <ScreenHeader onBack={() => setDocId(null)} />
+            {openDoc ? (
+              <ScrollView contentContainerStyle={s.reviewScroll}>
+                <Text style={s.eyebrow}>CONDITIONS</Text>
+                <Text style={s.questionTitle}>{openDoc.title}</Text>
+                <Text style={s.helper}>Updated {openDoc.updated}</Text>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 18, marginBottom: 8 }}>
+                  {conditionDocuments.map((doc) => (
+                    <Pressable
+                      key={doc.id}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: doc.id === openDoc.id }}
+                      onPress={() => setDocId(doc.id)}
+                      style={[s.docChip, doc.id === openDoc.id && s.docChipOn]}
+                    >
+                      <Text style={[s.docChipText, doc.id === openDoc.id && { color: color.ink }]}>{doc.title}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+                {openDoc.sections.map((section) => (
+                  <View key={section.heading} style={{ marginTop: 22 }}>
+                    <Text style={s.sectionTitle}>{section.heading}</Text>
+                    <Text style={s.legalBody}>{section.body}</Text>
+                  </View>
+                ))}
+              </ScrollView>
+            ) : null}
+          </SafeAreaView>
+        </SafeAreaProvider>
+      </Modal>
+    </>
+  );
+}
 function Home({ answers, reduce }: { answers: Answers; reduce: boolean }) {
-  const { dispatch, plans, planDispatch } = useContext(FlowContext)!;
+  const {
+    dispatch, plans, planDispatch,
+    openedInviteId, setOpenedInviteId,
+    inviteEntrance, setInviteEntrance,
+    inviteReveal, setInviteReveal,
+    homeTab, setHomeTab,
+  } = useContext(FlowContext)!;
   const pathname = usePathname();
   const router = useRouter();
-  const tab = pathname === "/you" ? "You" : pathname === "/invitations" ? "Invites" : "Events";
-  const matches = plans.filter(p => p.demoMatched);
-  return <View style={s.safe}>
-    <View style={s.homeTop}>
-      {tab === "Invites" ? <Text style={{fontFamily:serif,fontStyle:"italic",fontSize: 16,color:color.ink}}>INVITES</Text> : <Brand />}
+  const tab = homeTab;
+  const [panel, setPanel] = useState<HomeTab>(homeTab);
+  const pageName = panel === "Events" ? "events" : panel === "Invites" ? "invites" : "profile";
+  const matches = plans.filter(hasActiveInvite);
+  const [itineraries, setItineraries] = useState<DinnerItinerary[]>([]);
+  const [apiReady, setApiReady] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const plansRef = useRef(plans);
+  plansRef.current = plans;
+  const apiReadyRef = useRef(apiReady);
+  apiReadyRef.current = apiReady;
+  const tabOpacity = useRef(new Animated.Value(1)).current;
+  const tabShift = useRef(new Animated.Value(0)).current;
+  const homeTabRef = useRef(homeTab);
+  homeTabRef.current = homeTab;
+  const openedInvite = matches.find((plan) => plan.itineraryId === openedInviteId) ?? null;
+  const enterInviteCinema = (payload: InviteEntranceState) => {
+    setInviteReveal(false);
+    setOpenedInviteId(payload.itineraryId);
+    setInviteEntrance(payload);
+    setHomeTab("Invites");
+    setPanel("Invites");
+  };
+  useEffect(() => {
+    // Honor deep links without letting /home remounts wipe the in-memory tab.
+    if (pathname === "/invitations" || pathname === "/you") {
+      const next = homeTabFromPath(pathname);
+      setHomeTab(next);
+      setPanel(next);
+    }
+  }, [pathname, setHomeTab]);
+  const goTab = (next: HomeTab) => {
+    const prev = homeTabRef.current;
+    // Re-tap Invites while a detail is open → back to the cover list.
+    if (next === "Invites" && prev === "Invites" && openedInviteId) {
+      setOpenedInviteId(null);
+      return;
+    }
+    if (next !== "Invites") {
+      setOpenedInviteId(null);
+      setInviteEntrance(null);
+    }
+    if (next === prev && panel === next) return;
 
-    </View>
-    {tab === "Events" && <DateHome plans={plans} dispatch={planDispatch} reduce={reduce}/>}
-    {tab === "Invites" && (matches.length === 0 ? <View style={dateStyles.inviteBody}><InvitationArt/><InvitationMessages reduce={reduce}/></View> : <ScrollView>{matches.map(p=><View key={p.type} style={dateStyles.inviteCard}><Text style={s.eyebrow}>DEMO INVITATION</Text><Text style={dateStyles.inviteText}>{p.type}</Text><Text style={s.helper}>Timing and location to be arranged</Text><Text style={s.notePrivacy}>A preview of a match. No real person or booking is connected.</Text></View>)}</ScrollView>)}
-    {tab === "You" && <ScrollView contentContainerStyle={s.homeScroll}><ProfileEditor answers={answers} patch={patch=>dispatch({type:"answer",patch})}/><Text style={s.notePrivacy}>Your answers and photo stay in this preview session. Nothing is submitted.</Text></ScrollView>}
-    <View accessibilityRole="tablist" style={s.tabBar}>
-      {(["Events","Invites","You"] as const).map(item=><Pressable key={item} accessibilityRole="tab" accessibilityLabel={item} accessibilityState={{selected:tab===item}} aria-selected={tab===item} onPress={()=>router.replace(homeRoutes[item])} style={s.tab}><NavIcon name={item} active={tab===item}/></Pressable>)}
-    </View>
+    const from = panel;
+    homeTabRef.current = next;
+    setHomeTab(next);
+    // Switch the panel immediately — never gate navigation on an animation callback.
+    setPanel(next);
 
+    if (reduce) {
+      tabOpacity.setValue(1);
+      tabShift.setValue(0);
+      return;
+    }
+
+    const dir = homeTabOrder.indexOf(next) >= homeTabOrder.indexOf(from) ? 1 : -1;
+    tabOpacity.stopAnimation();
+    tabShift.stopAnimation();
+    tabOpacity.setValue(0);
+    tabShift.setValue(14 * dir);
+    Animated.parallel([
+      Animated.timing(tabOpacity, {
+        toValue: 1,
+        duration: 280,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(tabShift, {
+        toValue: 0,
+        duration: 280,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+  useEffect(() => {
+    if (inviteEntrance) return;
+    if (openedInviteId && !matches.some((plan) => plan.itineraryId === openedInviteId)) {
+      setOpenedInviteId(null);
+    }
+  }, [matches, openedInviteId, inviteEntrance, setOpenedInviteId]);
+  useEffect(() => {
+    let cancelled = false;
+    const sync = async () => {
+      try {
+        const [events, invitations] = await Promise.all([fetchDinnerEvents(), fetchInvitations()]);
+        if (cancelled) return;
+        const slots = events.map((event) => eventToItinerary({
+          id: String(event.id),
+          title: event.title,
+          neighborhood: event.neighborhood,
+          startsAt: event.startsAt,
+          timeZone: event.timeZone,
+        }));
+        setItineraries(slots);
+        setApiReady(true);
+        const invitationIds = new Set(invitations.map((inv) => String(inv.eventId)));
+        for (const plan of plansRef.current) {
+          if (!invitationIds.has(plan.itineraryId) && hasActiveInvite(plan)) {
+            planDispatch({ type: "remove", itineraryId: plan.itineraryId });
+          }
+        }
+        for (const inv of invitations) {
+          const id = String(inv.eventId);
+          const slot = eventToItinerary({
+            id,
+            title: inv.title,
+            neighborhood: inv.neighborhood,
+            startsAt: inv.startsAt,
+            timeZone: inv.timeZone,
+          });
+          planDispatch({
+            type: "add",
+            dateType: "Dinner",
+            itineraryId: id,
+            day: slot.day,
+            date: slot.date,
+            time: slot.time,
+            area: slot.area,
+          });
+          const matched = inv.state === "MATCHED";
+          planDispatch({
+            type: "patch",
+            itineraryId: id,
+            patch: {
+              waiting: true,
+              demoMatched: matched,
+              notify: true,
+              confirmed: matched,
+            },
+          });
+        }
+      } catch {
+        if (!cancelled) setApiReady(false);
+      }
+    };
+    void sync();
+    const poll = setInterval(() => {
+      void sync();
+      if (apiReadyRef.current) void triggerMatcher().catch(() => undefined);
+    }, 20000);
+    return () => {
+      cancelled = true;
+      clearInterval(poll);
+    };
+  }, [planDispatch]);
+  const cancelInterest = (id: string) => {
+    const plan = plans.find((p) => p.itineraryId === id);
+    if (plan?.demoMatched || plan?.confirmed) {
+      Alert.alert("Already matched", "This dinner is confirmed. Cancel from support once that flow exists.");
+      return;
+    }
+    setOpenedInviteId(null);
+    setInviteEntrance(null);
+    void leaveEvent(id)
+      .catch(() => undefined)
+      .finally(() => planDispatch({ type: "remove", itineraryId: id }));
+  };
+  const inviteDetailOpen = panel === "Invites" && !!openedInvite;
+  const showInviteChrome = !inviteDetailOpen && !inviteEntrance;
+  const showTabBar = !inviteEntrance && !inviteDetailOpen;
+  return <View style={[s.safe, { position: "relative", overflow: "hidden" }]}>
+    <Animated.View
+      pointerEvents="box-none"
+      style={{
+        flex: 1,
+        opacity: tabOpacity,
+        transform: [{ translateX: tabShift }],
+      }}
+    >
+      {showInviteChrome ? (
+        <View style={s.homeTop}>
+          <Text style={s.pageName}>{pageName}</Text>
+          <Brand />
+        </View>
+      ) : null}
+      {panel === "Events" ? (
+        <DateHome
+          plans={plans}
+          dispatch={planDispatch}
+          reduce={reduce}
+          itineraries={apiReady ? itineraries : undefined}
+          useApi={apiReady}
+          onJoined={enterInviteCinema}
+        />
+      ) : null}
+      {panel === "Invites" ? (
+        matches.length === 0 ? (
+          <View style={dateStyles.inviteBody}><InvitationArt/><InvitationMessages reduce={reduce}/></View>
+        ) : openedInvite ? (
+          <ActiveInvite
+            plan={openedInvite}
+            name={answers.name}
+            photoUri={answers.photoUri}
+            open
+            reveal={inviteReveal}
+            reduce={reduce}
+            onOpenChange={(open) => { if (!open) setOpenedInviteId(null); }}
+            onCancel={() => cancelInterest(openedInvite.itineraryId)}
+          />
+        ) : (
+          <InviteCoverPager
+            plans={matches}
+            name={answers.name}
+            photoUri={answers.photoUri}
+            reduce={reduce}
+            onOpen={(itineraryId) => {
+              setInviteReveal(true);
+              setOpenedInviteId(itineraryId);
+            }}
+            onCancel={(itineraryId) => cancelInterest(itineraryId)}
+          />
+        )
+      ) : null}
+      {panel === "You" ? <ScrollView contentContainerStyle={s.homeScroll}>
+        <ProfileEditor answers={answers} patch={patch=>dispatch({type:"answer",patch})}/>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Delete account"
+          onPress={() => setConfirmDelete(true)}
+          style={[s.resetButton, { marginTop: 28, marginBottom: 40 }]}
+        >
+          <Text style={{ color: color.ink, fontFamily: serif, fontSize: 16 }}>Delete account</Text>
+        </Pressable>
+      </ScrollView> : null}
+    </Animated.View>
+    <Modal
+      visible={confirmDelete}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setConfirmDelete(false)}
+    >
+      <View style={s.brandConfirmScrim}>
+        <View style={s.brandConfirmCard} accessibilityViewIsModal>
+          <Text style={s.brandConfirmTitle}>Delete account?</Text>
+          <Text style={s.brandConfirmBody}>
+            This clears your answers, photo, and preview dates from this session.
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Keep my account"
+            onPress={() => setConfirmDelete(false)}
+            style={s.brandConfirmPrimary}
+          >
+            <Text style={s.brandConfirmPrimaryText}>Keep my account</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Delete account"
+            onPress={() => {
+              setConfirmDelete(false);
+              clearSession();
+              setOpenedInviteId(null);
+              setInviteEntrance(null);
+              dispatch({ type: "reset" });
+              planDispatch({ type: "reset" });
+              router.replace("/");
+            }}
+            style={s.brandConfirmSecondary}
+          >
+            <Text style={s.brandConfirmSecondaryText}>Delete account</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+    {showTabBar ? (
+      <View accessibilityRole="tablist" style={s.tabBar} pointerEvents="auto">
+        {(["Events","Invites","You"] as const).map((item) => (
+          <Pressable
+            key={item}
+            accessibilityRole="tab"
+            accessibilityLabel={item}
+            accessibilityState={{ selected: tab === item }}
+            aria-selected={tab === item}
+            hitSlop={8}
+            onPress={() => {
+              void Haptics.selectionAsync().catch(() => undefined);
+              goTab(item);
+            }}
+            style={s.tab}
+          >
+            <NavIcon name={item} active={tab === item} reduce={reduce} />
+          </Pressable>
+        ))}
+      </View>
+    ) : null}
   </View>;
 }
 export default function AppContent() {
@@ -625,16 +1220,37 @@ export default function AppContent() {
   );
   useEffect(() => {
     if (!unlocked && pathname !== "/") router.replace("/");
-    if (unlocked && !homePath) router.replace("/invitations");
+    if (unlocked && !homePath) router.replace("/home");
   }, [unlocked, pathname, homePath, router]);
   const reduce = useGentleMotion();
   const { width } = useWindowDimensions();
   const lastPress = useRef(0);
+  const [signingIn, setSigningIn] = useState(false);
   const next = () => {
     const now = Date.now();
-    if (now - lastPress.current < 400) return;
+    if (now - lastPress.current < 400 || signingIn) return;
     lastPress.current = now;
     Keyboard.dismiss();
+    // Phone-first login: known numbers skip name/city; code step opens home.
+    if (flow.stage === "questions" && (flow.question === 0 || flow.question === 3)) {
+      const phone = flow.answers.phone;
+      setSigningIn(true);
+      void tryReturningLogin(phone)
+        .then((known) => {
+          if (known && flow.question === 0) {
+            dispatch({ type: "phoneKnown", name: known.name, phone });
+            return;
+          }
+          if (known && flow.question === 3) {
+            dispatch({ type: "returningHome", name: known.name, phone });
+            return;
+          }
+          dispatch({ type: "next" });
+        })
+        .catch(() => dispatch({ type: "next" }))
+        .finally(() => setSigningIn(false));
+      return;
+    }
     dispatch({ type: "next" });
   };
   const back = () => {
@@ -694,6 +1310,16 @@ export default function AppContent() {
                 reduce={reduce}
               />
             )}
+            {flow.stage === "conditions" && (
+              <Conditions
+                accepted={flow.conditionsAccepted}
+                toggle={(id) => dispatch({ type: "toggleCondition", id })}
+                next={next}
+                back={back}
+                reduce={reduce}
+                answers={flow.answers}
+              />
+            )}
             {flow.stage === "home" && (
               <Home
                 answers={flow.answers}
@@ -710,9 +1336,11 @@ export default function AppContent() {
 
 const s = StyleSheet.create({
   profileHero: { alignItems: "center", paddingVertical: 12 },
-  profilePhoto: { width: 126, height: 126, borderRadius: 63, backgroundColor: "#49303e", overflow: "hidden", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: color.accent, marginBottom: 18 },
+  photoStep: { alignItems: "center", paddingTop: 28, paddingBottom: 8, gap: 4 },
+  profilePhoto: { width: 168, height: 168, borderRadius: 84, backgroundColor: "#49303e", overflow: "hidden", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: color.line, marginBottom: 14 },
+  profilePhotoFilled: { borderColor: color.accent },
   profileImage: { width: "100%", height: "100%" },
-  photoPlaceholder: { color: color.accent, fontSize: 27 },
+  photoPlaceholder: { color: color.accent, fontSize: 36, lineHeight: 40 },
   profileSection: { marginBottom: 28 },
   sectionTitle: { color: color.accent, fontFamily: serif, fontSize: 17, marginBottom: 8 },
   outer: { flex: 1, backgroundColor: "#160f17", alignItems: "center" },
@@ -744,15 +1372,16 @@ const s = StyleSheet.create({
     letterSpacing: -2.5,
   },
   brandSmall: { fontSize: 19 },
+  brandColon: { color: color.accent, fontFamily: serif },
   brandSpark: {
     color: color.accent,
     fontSize: 15,
     marginLeft: 3,
     marginTop: -2,
   },
-  preview: { color: "#bba4b0", fontSize: 9, letterSpacing: 1.6 },
+  preview: { color: color.muted, fontFamily: sans, fontSize: 11, letterSpacing: 1.8, textTransform: "uppercase" },
   textButton: { minHeight: 44, paddingHorizontal: 4, justifyContent: "center" },
-  mutedButton: { color: color.muted, fontSize: 13 },
+  mutedButton: { color: color.muted, fontFamily: serif, fontSize: 13 },
   introScroll: {
     flexGrow: 1,
     justifyContent: "center",
@@ -762,10 +1391,12 @@ const s = StyleSheet.create({
   introContent: { paddingBottom: 13 },
   eyebrow: {
     color: color.accent,
-    fontSize: 9,
+    fontFamily: sans,
+    fontSize: 11,
     letterSpacing: 1.8,
     lineHeight: 16,
     marginBottom: 29,
+    textTransform: "uppercase",
   },
   introTitleGroup: { marginBottom: 28 },
   introTitle: {
@@ -817,8 +1448,8 @@ const s = StyleSheet.create({
   },
   buttonText: {
     color: color.dark,
-    fontSize: 14,
-    fontWeight: "500",
+    fontFamily: serif,
+    fontSize: 16,
     flexShrink: 1,
   },
   buttonArrow: { color: color.dark, fontSize: 16, lineHeight: 22 },
@@ -831,9 +1462,10 @@ const s = StyleSheet.create({
   buttonSubtleText: { color: color.ink },
   pressed: { opacity: 0.77 },
   bottomNote: {
-    color: "#bca7b2",
-    fontSize: 10,
-    lineHeight: 17,
+    color: color.muted,
+    fontFamily: serif,
+    fontSize: 13,
+    lineHeight: 18,
     textAlign: "center",
     marginTop: 16,
   },
@@ -845,10 +1477,62 @@ const s = StyleSheet.create({
     paddingTop: Platform.OS === "web" ? 25 : 6,
     paddingBottom: 14,
   },
+  modalTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 14,
+    minHeight: 52,
+  },
+  conditionRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    borderWidth: 1,
+    borderColor: color.line,
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    backgroundColor: color.surface,
+  },
+  conditionCheckHit: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    minHeight: 44,
+  },
+  conditionBox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: color.accent,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+  },
+  conditionBoxOn: { backgroundColor: color.accent },
+  conditionTick: { color: color.ink, fontSize: 13, lineHeight: 16, fontWeight: "700" },
+  conditionLabel: { flex: 1, color: color.ink, fontFamily: serif, fontSize: 14, lineHeight: 20 },
+  docChip: {
+    borderWidth: 1,
+    borderColor: color.line,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  docChipOn: { borderColor: color.accent, backgroundColor: color.surfaceRaised },
+  docChipText: { color: color.muted, fontFamily: serif, fontSize: 13 },
+  legalBody: { color: color.muted, fontFamily: serif, fontSize: 14, lineHeight: 22 },
   backButton: { width: 44, height: 44, justifyContent: "center" },
   backArrow: { color: color.ink, fontSize: 17 },
   stepCount: {
+    fontFamily: sans,
     fontSize: 11,
+    letterSpacing: 1.2,
     color: color.accent,
     minWidth: 44,
     textAlign: "right",
@@ -873,7 +1557,7 @@ const s = StyleSheet.create({
     lineHeight: 31,
     letterSpacing: -0.9,
   },
-  helper: { color: color.muted, fontSize: 13, lineHeight: 21, marginTop: 17 },
+  helper: { color: color.muted, fontFamily: serif, fontSize: 15, lineHeight: 22, marginTop: 17 },
   answerArea: { marginTop: 30 },
   questionBottom: {
     paddingHorizontal: 32,
@@ -890,7 +1574,7 @@ const s = StyleSheet.create({
     borderBottomColor: color.line,
     minHeight: 65,
   },
-  inputNote: { color: "#bba7b1", fontSize: 10, lineHeight: 18, marginTop: 12 },
+  inputNote: { color: color.muted, fontFamily: serif, fontSize: 12, lineHeight: 18, marginTop: 12 },
   smallDivider: {
     width: 30,
     height: 1,
@@ -905,7 +1589,7 @@ const s = StyleSheet.create({
     fontStyle: "italic",
   },
   choice: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: "#624754",
     backgroundColor: "#34232e",
     borderRadius: 17,
@@ -929,7 +1613,8 @@ const s = StyleSheet.create({
   choiceLabel: { color: color.ink, fontFamily: serif, fontSize: 15 },
   choiceCaption: {
     color: color.muted,
-    fontSize: 11,
+    fontFamily: serif,
+    fontSize: 13,
     lineHeight: 18,
     marginTop: 6,
   },
@@ -982,7 +1667,7 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 13,
   },
-  scaleText: { color: color.muted, fontSize: 10, lineHeight: 15 },
+  scaleText: { color: color.muted, fontFamily: serif, fontSize: 13, lineHeight: 18 },
   scaleHint: {
     textAlign: "center",
     color: "#bba7b1",
@@ -994,12 +1679,13 @@ const s = StyleSheet.create({
   },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 11 },
   chip: {
-    paddingVertical: 17,
+    paddingVertical: 16,
     paddingHorizontal: 18,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: "#735363",
     borderRadius: 30,
     minHeight: 52,
+    justifyContent: "center",
   },
   chipSelected: { backgroundColor: "#593b45", borderColor: color.accent },
   chipText: { color: "#dac8cd", fontFamily: serif, fontSize: 15 },
@@ -1017,8 +1703,9 @@ const s = StyleSheet.create({
   },
   noteMeta: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
   notePrivacy: {
-    color: "#bba7b1",
-    fontSize: 11,
+    color: color.muted,
+    fontFamily: serif,
+    fontSize: 13,
     lineHeight: 19,
     marginVertical: 23,
   },
@@ -1035,11 +1722,13 @@ const s = StyleSheet.create({
   },
   summaryCopy: { flex: 1 },
   summaryLabel: {
-    fontSize: 8,
-    letterSpacing: 1.5,
-    color: "#b99b9c",
+    fontFamily: sans,
+    fontSize: 11,
+    letterSpacing: 1.6,
+    textTransform: "uppercase",
+    color: color.muted,
     marginBottom: 9,
-    lineHeight: 14,
+    lineHeight: 16,
   },
   summaryValue: {
     fontFamily: serif,
@@ -1047,7 +1736,7 @@ const s = StyleSheet.create({
     lineHeight: 23,
     color: color.ink,
   },
-  edit: { color: color.accent, fontSize: 11, paddingVertical: 12 },
+  edit: { color: color.accent, fontFamily: serif, fontSize: 13, paddingVertical: 12 },
   homeTop: {
     paddingHorizontal: 29,
     paddingTop: Platform.OS === "web" ? 30 : 12,
@@ -1055,6 +1744,12 @@ const s = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  pageName: {
+    fontFamily: serif,
+    fontSize: 16,
+    color: color.ink,
+    letterSpacing: 0.2,
   },
   previewBadge: {
     paddingHorizontal: 12,
@@ -1073,7 +1768,8 @@ const s = StyleSheet.create({
   },
   homeGreeting: {
     color: color.muted,
-    fontSize: 12,
+    fontFamily: serif,
+    fontSize: 15,
     marginTop: 19,
     marginBottom: 30,
   },
@@ -1092,11 +1788,13 @@ const s = StyleSheet.create({
     paddingTop: 20,
   },
   cardEyebrow: {
-    color: "#d1b0a4",
-    fontSize: 7,
-    letterSpacing: 1.2,
+    color: color.accent,
+    fontFamily: sans,
+    fontSize: 11,
+    letterSpacing: 1.8,
+    textTransform: "uppercase",
     flexShrink: 1,
-    lineHeight: 14,
+    lineHeight: 16,
   },
   cardStar: { fontSize: 15, color: color.accent },
   art: {
@@ -1210,7 +1908,7 @@ const s = StyleSheet.create({
     paddingVertical: 19,
     backgroundColor: "#6f495024",
   },
-  momentLink: { color: "#e6bea0", fontSize: 12 },
+  momentLink: { color: color.accent, fontFamily: serif, fontSize: 13 },
   homeFoot: { alignItems: "center", marginTop: 29 },
   smallLine: {
     height: 1,
@@ -1226,11 +1924,12 @@ const s = StyleSheet.create({
     textAlign: "center",
   },
   demoNote: {
-    fontSize: 9,
-    lineHeight: 15,
+    fontFamily: serif,
+    fontSize: 13,
+    lineHeight: 18,
     textAlign: "center",
     marginTop: 20,
-    color: "#b49ba7",
+    color: color.muted,
   },
   tabBar: {
     flexDirection: "row",
@@ -1239,6 +1938,8 @@ const s = StyleSheet.create({
     paddingTop: 7,
     paddingBottom: Platform.OS === "web" ? 15 : 3,
     backgroundColor: color.background,
+    zIndex: 20,
+    elevation: 20,
   },
   tab: {
     flex: 1,
@@ -1248,7 +1949,7 @@ const s = StyleSheet.create({
     minHeight: 61,
   },
   tabSymbol: { fontSize: 15, lineHeight: 22, color: "#9e8493" },
-  tabLabel: { fontSize: 10, color: "#b09aa6" },
+  tabLabel: { fontFamily: sans, fontSize: 11, color: color.muted },
   tabActive: { color: color.accent },
   emptyInvite: {
     marginTop: 38,
@@ -1272,7 +1973,8 @@ const s = StyleSheet.create({
   },
   emptyBody: {
     color: color.muted,
-    fontSize: 13,
+    fontFamily: serif,
+    fontSize: 15,
     lineHeight: 23,
     textAlign: "center",
     marginTop: 18,
@@ -1281,8 +1983,9 @@ const s = StyleSheet.create({
   savedRow: { marginTop: 30 },
   savedTitle: {
     color: color.accent,
-    fontSize: 10,
-    letterSpacing: 1.3,
+    fontFamily: sans,
+    fontSize: 11,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
   },
   savedDescription: {
@@ -1299,6 +2002,61 @@ const s = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 15,
+  },
+  brandConfirmScrim: {
+    flex: 1,
+    backgroundColor: "rgba(17, 10, 15, 0.72)",
+    justifyContent: "center",
+    paddingHorizontal: 28,
+  },
+  brandConfirmCard: {
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: color.line,
+    backgroundColor: color.surface,
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    paddingBottom: 20,
+  },
+  brandConfirmTitle: {
+    fontFamily: serif,
+    fontSize: 28,
+    lineHeight: 34,
+    color: color.ink,
+    textAlign: "center",
+  },
+  brandConfirmBody: {
+    marginTop: 12,
+    marginBottom: 26,
+    fontFamily: serif,
+    fontSize: 15,
+    lineHeight: 22,
+    color: color.muted,
+    textAlign: "center",
+  },
+  brandConfirmPrimary: {
+    minHeight: 52,
+    borderRadius: 999,
+    backgroundColor: color.ink,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  brandConfirmPrimaryText: {
+    color: color.background,
+    fontFamily: serif,
+    fontSize: 18,
+    fontStyle: "italic",
+  },
+  brandConfirmSecondary: {
+    minHeight: 48,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  brandConfirmSecondaryText: {
+    color: color.accent,
+    fontFamily: serif,
+    fontSize: 16,
   },
   modalBackdrop: {
     flex: 1,
@@ -1340,9 +2098,11 @@ const s = StyleSheet.create({
   detailRule: { height: 1, backgroundColor: "#74515e", marginVertical: 25 },
   detailMeta: {
     color: color.accent,
-    fontSize: 8,
-    letterSpacing: 0.7,
-    lineHeight: 17,
+    fontFamily: sans,
+    fontSize: 11,
+    letterSpacing: 1.8,
+    lineHeight: 16,
+    textTransform: "uppercase",
   },
   confirmCard: {
     maxWidth: 380,

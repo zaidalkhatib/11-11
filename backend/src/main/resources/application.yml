@@ -19,3 +19,10 @@ app:
   auth:
     issuer: ${AUTH_ISSUER:}
     audience: ${AUTH_AUDIENCE:eleven-eleven-api}
+  local-dev:
+    jwt-secret: ${LOCAL_DEV_JWT_SECRET:}
+    auto-partner: ${LOCAL_DEV_AUTO_PARTNER:false}
+  matching:
+    enabled: ${MATCHING_ENABLED:false}
+    interval-ms: ${MATCHING_INTERVAL_MS:3600000}
+    require-identity-verified: ${MATCHING_REQUIRE_VERIFIED:true}

@@ -43,7 +43,7 @@ class IntegrationTest {
     org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor auth(String subject) {return jwt().jwt(token(subject));}
     @BeforeEach void setup() {
         mvc=MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
-        for(String table:List.of("date_participant","date_arrangement","event_private","booking_command","booking_request","safety_exclusion","event_interest","answer","profile","experience","outbox")) db.update("DELETE FROM "+table);
+        for(String table:List.of("match_notification","date_participant","date_arrangement","event_private","booking_command","booking_request","safety_exclusion","event_interest","answer","profile","experience","outbox")) db.update("DELETE FROM "+table);
         a=Owners.id(token("alice"));b=Owners.id(token("bob"));event=UUID.randomUUID();
         profiles.put(a,new ProfileService.Update("Synthetic A",LocalDate.of(1995,1,1),null));
         profiles.put(b,new ProfileService.Update("Synthetic B",LocalDate.of(1996,1,1),null));
@@ -65,11 +65,15 @@ class IntegrationTest {
         for(var answer:List.of(new Catalog.Answer(1,"ANSWERED",List.of("o01","o01"),false),new Catalog.Answer(1,"ANSWERED",List.of("o01","o12"),false),new Catalog.Answer(2,"ANSWERED",List.of("o01"),false),new Catalog.Answer(1,"ANSWERED",List.of("bad"),false)))
             assertThatThrownBy(()->answer(a,"music",answer)).isInstanceOf(ApiException.class);
         assertThatThrownBy(()->answer(a,"religion",new Catalog.Answer(1,"ANSWERED",List.of("o01"),false))).isInstanceOf(ApiException.class);
-        assertThatThrownBy(()->answer(a,"selfRating",new Catalog.Answer(1,"ANSWERED",List.of("o01"),false))).isInstanceOf(ApiException.class);
+        // height remains collection-disabled; looks self-rating is collectible for reciprocal matching (D-022).
+        assertThatThrownBy(()->answer(a,"height",new Catalog.Answer(1,"ANSWERED",List.of("o01"),false))).isInstanceOf(ApiException.class);
+        answer(a,"selfRating",new Catalog.Answer(1,"ANSWERED",List.of("o08"),false));
         answer(a,"religion",new Catalog.Answer(1,"ANSWERED",List.of("o01"),true));
         answer(a,"religion",new Catalog.Answer(1,"DECLINED",List.of(),false));
         assertThat(profiles.answers(a).get("religion").choices()).isEmpty();
-        forget(a,"religion");assertThat(profiles.answers(a)).isEmpty();
+        forget(a,"religion");
+        forget(a,"selfRating");
+        assertThat(profiles.answers(a)).isEmpty();
     }
     @Test void profileVersionAndAgeAreEnforced() throws Exception {
         mvc.perform(put("/api/v1/me/profile").with(auth("alice")).contentType("application/json").content("{\"displayName\":\"Synthetic\",\"expectedVersion\":8}")).andExpect(status().isConflict());
@@ -139,8 +143,8 @@ class IntegrationTest {
     }
     @Test void persistedAnswersInterestsVerificationAndReportsFeedInternalEvaluation() {
         for(String owner:List.of(a,b)) {
-            answer(owner,"gender",new Catalog.Answer(1,"ANSWERED",List.of("o03"),false));
-            answer(owner,"interestedIn",new Catalog.Answer(1,"ANSWERED",List.of("o03"),false));
+            answer(owner,"gender",new Catalog.Answer(1,"ANSWERED",List.of("o01"),false));
+            answer(owner,"interestedIn",new Catalog.Answer(1,"ANSWERED",List.of("o03"),false)); // Men and women
             interests.join(owner,event);
         }
         var policy=com.eleveneleven.matching.MatchingEngine.Policy.exploratoryV3();
@@ -255,6 +259,6 @@ class IntegrationTest {
     }
     @Test void mockIdentityCannotBecomeVerifiedOrPairable() throws Exception {
         mvc.perform(get("/api/v1/me/readiness").with(auth("alice"))).andExpect(jsonPath("$.canPair").value(false));
-        assertThat(catalog.definition().questions()).hasSize(85);
+        assertThat(catalog.definition().questions()).hasSize(97);
     }
 }

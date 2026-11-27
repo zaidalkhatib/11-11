@@ -114,30 +114,36 @@ class MatchingTest {
             assertThat(result.relationships().structure()).isEqualTo(expected);
             assertThat(result.relationships()).isEqualTo(evaluate(right,left).relationships());
             assertThat(result.eligibility()).isEqualTo(Gate.PASS);
-            assertThat(result.relationships().pairingHeld()).isEqualTo(expected!=Alignment.ALIGNED);
+            // Hard hold only on CONFLICT; DISCUSS/UNKNOWN still allow soft scoring.
+            assertThat(result.relationships().pairingHeld()).isEqualTo(expected==Alignment.CONFLICT);
         }
     }
-    @Test void relationshipIntentionMatrixNeverInventsMeaningForBroadIntentions() {
+    @Test void relationshipIntentionMatrixTreatsSeriousClusterAsAligned() {
         for(int a=1;a<=5;a++) for(int b=1;b<=5;b++) {
             var left=person("a",Map.of("relationship",answer("o0"+a)));
             var right=person("b",Map.of("relationship",answer("o0"+b)));
-            Alignment expected=a==3 || a==5 || b==3 || b==5?Alignment.UNKNOWN:a==b?Alignment.ALIGNED:a==4 || b==4?Alignment.CONFLICT:Alignment.DISCUSS;
+            Alignment expected;
+            if (a == b) expected = Alignment.ALIGNED;
+            else if (Set.of(1, 2, 3).contains(a) && Set.of(1, 2, 3).contains(b)) expected = Alignment.ALIGNED;
+            else if ((a == 4 && Set.of(1, 2, 3).contains(b)) || (b == 4 && Set.of(1, 2, 3).contains(a))) expected = Alignment.CONFLICT;
+            else expected = Alignment.DISCUSS;
             var result=evaluate(left,right);
             assertThat(result.relationships().intention()).isEqualTo(expected);
             assertThat(result.relationships()).isEqualTo(evaluate(right,left).relationships());
             assertThat(result.eligibility()).isEqualTo(Gate.PASS);
+            assertThat(result.relationships().pairingHeld()).isEqualTo(expected==Alignment.CONFLICT);
         }
     }
     @Test void missingDeclinedAndUnsupportedRelationshipFactsRemainUnknown() {
         for(var unknown:List.of(new Answer(1,"DECLINED",List.of(),false),new Answer(2,"ANSWERED",List.of("o01"),false),answer("invalid"))) {
             var result=evaluate(person("a",Map.of("relationship",unknown,"relationshipStructure",unknown)),person("b",Map.of()));
-            assertThat(result.relationships()).isEqualTo(new Relationships(Alignment.UNKNOWN,Alignment.UNKNOWN,true));
-            assertThat(result.compatibility()).isNull();assertThat(result.evidence()).isEmpty();
+            assertThat(result.relationships()).isEqualTo(new Relationships(Alignment.UNKNOWN,Alignment.UNKNOWN,false));
+            assertThat(result.compatibility()).isNull();
         }
         var missing=new Candidate("a",LocalDate.of(1995,1,1),true,false,Gender.NON_BINARY,Set.of(Gender.NON_BINARY),true,Map.of(),Map.of());
         var result=evaluate(missing,person("b",Map.of()));
         assertThat(result.eligibility()).isEqualTo(Gate.PASS);
-        assertThat(result.relationships()).isEqualTo(new Relationships(Alignment.UNKNOWN,Alignment.UNKNOWN,true));
+        assertThat(result.relationships()).isEqualTo(new Relationships(Alignment.UNKNOWN,Alignment.UNKNOWN,false));
     }
     @Test void matchedDeclaredRelationshipsStillDoNotEstablishFullCompatibilityReadiness() {
         var result=evaluate(person("a",Map.of()),person("b",Map.of()));
@@ -148,5 +154,25 @@ class MatchingTest {
     }
     @Test void noEventOptInMeansNoPairing() {
         assertThat(engine.evaluate(person("a",Map.of()),person("b",Map.of()),new Context(clock,false,false)).eligibility()).isEqualTo(Gate.FAIL);
+    }
+    @Test void reciprocalPolicyUsesLooksAndPrefersEqualOrHigherSelfRating() {
+        var reciprocal=new MatchingEngine(Policy.reciprocalV1());
+        var base=new HashMap<String,Answer>();
+        base.put("music",answer("o01")); base.put("movies",answer("o01")); base.put("conversations",answer("o01"));
+        base.put("values",answer("o01")); base.put("pace",answer("o02"));
+        base.put("relationship",answer("o02")); base.put("relationshipStructure",answer("o01"));
+        base.put("selfRating",answer("o07")); base.put("looksImportance",answer("o04"));
+        var lower=new HashMap<>(base); lower.put("selfRating",answer("o04"));
+        var equal=new HashMap<>(base);
+        var highLooks=person("a",base);
+        var lowerLooks=person("b",lower);
+        var equalLooks=person("c",equal);
+        var better=reciprocal.evaluate(highLooks,equalLooks,new Context(clock,false,true,false));
+        var worse=reciprocal.evaluate(highLooks,lowerLooks,new Context(clock,false,true,false));
+        assertThat(better.policyVersion()).isEqualTo("reciprocal-v1");
+        assertThat(better.eligibility()).isEqualTo(Gate.PASS);
+        assertThat(better.compatibility()).isNotNull();
+        assertThat(worse.compatibility()).isNotNull();
+        assertThat(better.compatibility()).isGreaterThan(worse.compatibility());
     }
 }

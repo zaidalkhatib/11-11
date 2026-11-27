@@ -1,12 +1,12 @@
 # 11:11
 
-11:11 arranges personality-based, 1:1 blind dates around experiences. This repository holds shared project planning, the website concept in `website/`, and the authorized iOS-first UI prototype in `mobile/`.
+11:11 arranges personality-based, 1:1 blind dates around experiences. This repository ([github.com/zaidalkhatib/11-11](https://github.com/zaidalkhatib/11-11.git)) holds shared project planning, the website concept in `website/`, the authorized iOS-first UI prototype in `mobile/` (88-step onboarding — D-015), and the accepted isolated Java API in `backend/` (D-016; clients not wired).
 
 ## Shared documents
 
 - [Project brief](docs/project-brief.md): confirmed requirements, constraints, and open questions; the common reference for every workstream.
-- [Decision log](docs/decision-log.md): approved decisions, proposals, and the approval process.
-- [Architecture](docs/architecture.md): website implementation direction, shared foundations, and the recommended iOS-first path.
+- [Decision log](docs/decision-log.md): approved decisions, proposals, and the approval process (through D-016).
+- [Architecture](docs/architecture.md): website, mobile UI, shared foundations, and as-built backend boundaries.
 - [Validation and launch gates](docs/validation-and-launch-gates.md): prototype checks and decisions required before collecting data or launching.
 - [Design charter](docs/charters/design.md)
 - [Engineering charter](docs/charters/engineering.md)
@@ -26,15 +26,13 @@ For cross-conversation handoffs, include the task, relevant file contents or acc
 
 ## Current scope and next steps
 
-Updated 2026-11-08: the user authorized building the website first after inspecting the live [222 reference](https://222.place/), using a related premium style with different color and animation, and planning a scalable cross-platform app with iOS first after the website (D-008–D-010). The live-reference instruction replaces the earlier screenshot prerequisite.
+Updated 2026-11-26: planning docs now match the checked-in tree (D-015, D-016). Earlier: website first after live [222](https://222.place/) review, original premium style with different color/animation, then iOS-first cross-platform (D-008–D-010).
 
-The current website is a concept preview, not a working dating service or account system. The later signup addition (D-011) introduces a primary **Sign up** action with a phone-entry and Messages-inspired local chat demo, plus **Download our app** opening an iOS coming-soon concept. A sample number is available. Phone input and chat messages remain in React memory, are not submitted, and clear when signup closes or the page reloads. No App Store or TestFlight download exists yet. No production personal-data collection, real account or matching implementation, payments, reservations, outreach, or commercial promises are approved. D-014 separately authorizes the local-only mobile UI prototype. Public launch and any new external service commitments remain separate gates. The technical stack described in the architecture is an implementation recommendation, not a user-selected vendor commitment.
+The website remains a concept preview (D-011–D-013): local Sign up / chat demo and iOS coming-soon — no real accounts, App Store link, payments, or outreach. **Mobile** (`mobile/`) is the D-014 UI prototype with the accepted **88-step** onboarding (D-015). **Backend** (`backend/`) is the accepted Spring Boot foundation (D-016); neither client calls it yet. Gates 3–5 and open brief questions (Q-01–Q-15) still block production data collection, API wiring, and live dates.
 
-The latest requested revision (D-013) uses a minimalist purpose sentence, a compact changing experience pill and the original Dinner/adventure/creative bar. It removes the footer, idea panel and visible play/pause control; how-it-works is informational only. Automatic selection respects reduced motion and pauses while a dialog is open. TypeScript, lint, 10 tests, production build and responsive browser checks passed. The revision was privately published on 2026-11-08.
+**Current priority (D-017):** finish website and mobile **UI** first. Backend work, verification, and API wiring are deferred. Launch story: **18+**, **San Diego**, **Dinner only** (expand later).
 
-Review the preview and the validation record, then resolve the relevant product and operational questions before a real signup or service launch. The original organization-only phase is preserved in the decision log.
-
-Initial inspection on 2026-10-24 found only `.git/` metadata and no pre-existing project documents or app files. Existing Git metadata was preserved.
+Next: continue UI (copy/brand Q-13, Dinner-only surfaces, iOS polish). Gate 3+ and backend stay on hold.
 
 ## Website preview and validation
 
@@ -49,10 +47,13 @@ This is a concept preview. No native iOS app or real dating service is launched.
 
 - [Minimalist landing validation](docs/minimalist-validation.md): D-013 checks, responsive measurements, limitations and verified private publication.
 
-## iOS-first app UI · D-014
+## iOS-first app · D-014 / D-015 / D-024
 
-The user next authorized UI-first app iteration without backend work. `mobile/` now contains an Expo React Native prototype: four staged-reading intro pages, six required personality questions, editable review, and a gated local demo home. It uses the website’s original aubergine/copper/cream tokens without changing the existing website. No account, real match, event availability or booking is created.
+`mobile/` is the Expo React Native app. Against local-dev it saves profile/answers after conditions, lists seeded dinners, records interest, and shows matches on Invites. Phone code UI is preview-only (no SMS). Production OIDC/verification still required before real users.
 
-- Run instructions: [mobile/README.md](mobile/README.md).
-- Verification and remaining native-device limits: [mobile UI validation](docs/mobile-ui-validation.md).
-- Local browser preview for the current Mac session: http://127.0.0.1:8084.
+- Run: [mobile/README.md](mobile/README.md) and [backend/README.md](backend/README.md) (`./scripts/local-dev.sh` then `cd mobile && npx expo start --ios`).
+- Verification: [mobile UI validation](docs/mobile-ui-validation.md).
+
+## Backend · D-016 / D-024
+
+`backend/` is the Spring Boot API. Default JAR stays fail-closed. With `SPRING_PROFILES_ACTIVE=local-dev`, H2 file DB + seeded San Diego dinners + loopback JWT + single-sim complementary matching are enabled. Docs: [backend/README.md](backend/README.md).

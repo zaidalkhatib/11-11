@@ -1,5 +1,7 @@
 # iOS-first UI validation · 2026-11-08
 
+**Amendment 2026-11-26 (docs only):** the checked-in questionnaire is the accepted **88-step** flow (D-015), not the six-question / earlier-count wording below. Xcode and simulators are available on this Mac; Expo Go for SDK 58 needs a simulator on iOS ≥16.4 (iPhone 17 Pro used successfully). Physical VoiceOver / Dynamic Type certification against the current flow remains outstanding. Backend foundation accepted (D-016); clients still do not call it. Historical pass/fail notes below describe the 2026-11-08 snapshot unless otherwise stated.
+
 Scope: D-014 UI-only prototype in `mobile/`. Native React Native screens with Expo SDK 58, React 19.3, React Native 0.88.1 and React Native Web for review. No backend or real account, match, invitation, booking, data submission or storage was implemented.
 
 ## Passed on the final source

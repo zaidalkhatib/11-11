@@ -1,6 +1,6 @@
 # Synthetic frontend-contract → backend HTTP integration
 
-Implemented: a framework-neutral adapter and a test-only actual-HTTP harness. **The mobile app is still entirely preview-only.** No `mobile/` source, visible UI, reducer, simulator, token store or dependency was changed. Existing local answers have not been transmitted.
+Implemented: a framework-neutral adapter, a test-only actual-HTTP harness, and (D-024) an opt-in **local-dev** mobile hookup. Default JAR remains fail-closed. With `SPRING_PROFILES_ACTIVE=local-dev` + `LOCAL_DEV_JWT_SECRET`, Expo can mint a loopback JWT, save profile/answers after conditions, list seeded events, and record interest — never `demoMatched`.
 
 ## Current mobile state and mapping
 
@@ -16,7 +16,7 @@ A compile-only test checks compatibility with the actual current `Answers` type.
 
 ## Acknowledgement and recovery
 
-`createClient` still requires HTTPS, an explicitly supplied token accessor and explicit method calls. It rejects credentials/query/fragment in the base URL and makes no network calls on import/construction. Each request has a configurable finite timeout (10 seconds by default) and cancellation signal. There is **no automatic retry**, including no automatic write replay.
+`createClient` requires HTTPS by default, an explicitly supplied token accessor and explicit method calls. With `{ allowInsecureLocalhost: true }` it also accepts `http:` only for `127.0.0.1`, `localhost`, or `10.0.2.2`. It rejects credentials/query/fragment in the base URL and makes no network calls on import/construction. Each request has a configurable finite timeout (10 seconds by default) and cancellation signal. There is **no automatic retry**, including no automatic write replay.
 
 `saveProfile` returns acknowledged only after a successful server response. A stale version returns conflict without overwriting newer data; a 401 returns unauthorized. Network/timeout or mutation 5xx outcomes remain unconfirmed. A lost response may already have committed: read the current profile, compare its version and intended values, and let the user review before retrying. A duplicate create may return 409; do not translate that into saved or blindly retry as an update.
 
@@ -43,8 +43,24 @@ The HTTP test compiles the existing TypeScript code into ignored backend output,
 
 Verified: profile create/read/update/version conflict, all four new questions, decline/delete/missing responses, consent rejection and explicit consent, invalid API values, explicit event identity, join/repeat/leave, unauthorized tokens, no-store responses, and database invariants (one interest outbox record despite a lost response and retries; zero bookings and verified profiles). Offline, timeout, partial batch and 503 recovery are injected client transport faults around the real request path; they are not claims of testing actual radio loss or production network behavior.
 
-## Future opt-in UI wiring — not implemented
+## Local-dev mobile hookup (D-024)
 
-Before connecting, implement an approved real authentication/verification flow, secure session handling and privacy/consent UX. Add a deliberate review-and-save action; never connect an effect to `flow.answers` or automatically upload existing drafts. Keep the preview route and state intact until that integration is explicitly enabled. Display pending, acknowledged, conflict, unauthorized, partial and unconfirmed states separately; only acknowledged responses can show saved. Review clears/deletions and consent changes separately.
+Authorized for simulator-only wiring. Not production auth, SMS, OIDC, or identity verification.
 
-Replace type-only date selection with fetched scheduled event IDs and organizer details, then require an explicit interest action. Integrate invitation acceptance and restricted date disclosure only after production allocation, staff operations and safety workflows exist. Do not reuse preview `demoMatched` as backend truth. No actual app wiring, native UI, secure token store, live provider, booking, post-date feedback collector, push notification, offline persistence queue or automatic sync has been implemented here.
+```sh
+# Backend (from repo root)
+mvn -f backend/pom.xml -DskipTests package
+SPRING_PROFILES_ACTIVE=local-dev \
+LOCAL_DEV_JWT_SECRET='replace-with-at-least-32-bytes-secret!!' \
+java -jar backend/target/backend-*.jar
+
+# Expo
+cd mobile
+EXPO_PUBLIC_API_BASE_URL=http://127.0.0.1:8080 npx expo start
+```
+
+Flow: after conditions, `createProfileAndAnswers` mints a loopback JWT via `POST /api/v1/local-dev/session`, then `PUT` profile + answers. Events load from `GET /api/v1/events` (five seeded San Diego dinners). Slide-to-join uses `PUT /me/interests/{id}` and sets local `waiting: true` with `demoMatched: false`. Matching locks a pair only when **two profiles** joined the same dinner **and** reciprocal scoring over their answers produces a real score. After each join the matcher is nudged once. Optional `LOCAL_DEV_AUTO_PARTNER=true` can mint a synthetic partner for solo demos. Invites hydrate from `GET /me/invitations`. Cancel uses `DELETE` interest while still waiting.
+
+Phone code UI is preview-only (no SMS). Still out of scope for production: SecureStore/OIDC, physical-device bind beyond loopback, auto-sync of drafts, CORS for Expo web, OpenTable booking. Gate 3 real verification remains required before collecting real users.
+
+Quick start: `./scripts/local-dev.sh` then `cd mobile && npx expo start --ios`.

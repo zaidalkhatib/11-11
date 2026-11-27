@@ -30,6 +30,7 @@ public class Api {
         return ResponseEntity.ok().eTag(AnswerVersions.etag(result.revision())).body(result);
     }
     @GetMapping("/api/v1/me/interests") Object interests(@AuthenticationPrincipal Jwt jwt) { return interests.mine(Owners.id(jwt)); }
+    @GetMapping("/api/v1/me/invitations") Object invitations(@AuthenticationPrincipal Jwt jwt) { return interests.invitations(Owners.id(jwt)); }
     @PutMapping("/api/v1/me/interests/{event}") Object join(@AuthenticationPrincipal Jwt jwt,@PathVariable UUID event) { interests.join(Owners.id(jwt),event); return Map.of("state","INTEREST_RECORDED","bookingConfirmed",false); }
     @DeleteMapping("/api/v1/me/interests/{event}") void leave(@AuthenticationPrincipal Jwt jwt,@PathVariable UUID event) { interests.leave(Owners.id(jwt),event); }
     @GetMapping("/api/v1/me/readiness") Object readiness(@AuthenticationPrincipal Jwt jwt) {

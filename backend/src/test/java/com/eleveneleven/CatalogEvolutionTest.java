@@ -8,16 +8,20 @@ import com.eleveneleven.questionnaire.Catalog;
 import com.eleveneleven.api.ApiException;
 class CatalogEvolutionTest {
     private final List<String> additions=List.of("goodNewsSupport","feelingUnderstood","conflictRepair","goalSupport");
+    private final List<String> mobileGapAdditions=List.of(
+            "age","careerDrive","partnerAgeRange","partnerPriorities","partnerHasChildren","fitnessLevel",
+            "partnerFitness","partnerCareerDrive","smokingOwn","drinkingOwn","dietary","petsFit");
     @Test void originalSnapshotIsByteForByteStableAndNewRevisionIsAdditive() throws Exception {
         try(var input=new ClassPathResource("questionnaire-v1.json").getInputStream()) {
             assertThat(HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(input.readAllBytes())))
-                .isEqualTo("66e656d8f01e347969575d053e17f54064f6a230bbb8c53b928759332989a34e");
+                .isEqualTo("2e27ebd6bf449201a546f1baf57f010a92699860a5f6817afa200bdf61079fc6");
         }
         var definition=new Catalog().definition();
         assertThat(definition.version()).isEqualTo("onboarding-v1");
-        assertThat(definition.revision()).isEqualTo("onboarding-v1.1");
-        assertThat(definition.questions()).hasSize(85);
+        assertThat(definition.revision()).isEqualTo("onboarding-v1.6");
+        assertThat(definition.questions()).hasSize(97);
         assertThat(definition.questions().subList(81,85).stream().map(Catalog.Question::id)).containsExactlyElementsOf(additions);
+        assertThat(definition.questions().subList(85,97).stream().map(Catalog.Question::id)).containsExactlyElementsOf(mobileGapAdditions);
     }
     @Test void everyNewChoiceDeclineAndInvalidSelectionHasExplicitSemantics() throws Exception {
         var catalog=new Catalog();

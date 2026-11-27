@@ -1,6 +1,6 @@
 # 11:11 Java foundation
 
-This is an isolated, runnable backend foundation. The Expo UI and simulator are unchanged and do not send data here. Use synthetic fixtures only. There is no account verification provider, real pairing, booking provider, notification sender or production launch.
+Local-dev foundation for the Expo simulator. With `SPRING_PROFILES_ACTIVE=local-dev`, the app can save profile/answers, browse seeded dinners, record interest, and get matched via a local complementary partner (single-sim). Phone SMS, OIDC, and identity verification stay out of scope.
 
 Java 21 source/bytecode target, Spring Boot 4.1.2, Maven, Spring Security, JDBC and Flyway. Verified here with JDK 27.0.1 and Maven 3.8.8. Spring's [system requirements](https://docs.spring.io/spring-boot/system-requirements.html) list Java 17–27 and Maven 3.6.3+ for this release. Java 21 LTS is the deployment target; runtime testing on JDK 21 remains a CI gate.
 
@@ -14,9 +14,32 @@ cd backend
 java -jar target/backend-0.1.0-SNAPSHOT.jar
 ```
 
-The service binds **127.0.0.1:8080**. An empty local H2 file database lives in `backend/data/`; Flyway applies migrations. No event or personal-data seed is installed. `/health`, `/api/v1/questionnaire` and `/api/v1/events` are public GETs. Every private route fails closed without authentication configuration. There is no fake SMS code, development user header, password fallback or runtime mock-auth profile.
+The service binds **127.0.0.1:8080**. An empty local H2 file database lives in `backend/data/`; Flyway applies migrations. No event or personal-data seed is installed in the default profile. `/health`, `/api/v1/questionnaire` and `/api/v1/events` are public GETs. Every private route fails closed without authentication configuration.
 
-For approved future identity integration, set `AUTH_ISSUER` to a trusted HTTPS OIDC issuer and `AUTH_AUDIENCE` to the API audience. JWT signature, issuer, audience and time claims are checked; account ownership derives from issuer plus subject, never request body IDs. A valid token is **not** identity/age/phone verification: profiles remain unverified, and clients cannot set verification. Test-only authentication helpers are under `src/test/` and absent from the executable JAR. Do not connect Expo or collect real data before the launch gates in [architecture](docs/architecture.md).
+### Local-dev simulator hookup (D-024)
+
+Opt-in only — never the default. H2 file DB lives in `backend/data/`.
+
+```sh
+# from repo root
+./scripts/local-dev.sh
+# or:
+mvn -B -f backend/pom.xml -DskipTests package
+cd backend
+SPRING_PROFILES_ACTIVE=local-dev \
+LOCAL_DEV_JWT_SECRET='local-dev-secret-at-least-32-bytes-ok' \
+java -jar target/backend-0.1.0-SNAPSHOT.jar
+```
+
+Then Expo (default API base is already `http://127.0.0.1:8080`):
+
+```sh
+cd mobile && npx expo start --ios
+```
+
+Under `local-dev`: loopback-only `POST /api/v1/local-dev/session` mints an HS256 JWT; five San Diego dinners are seeded; matching runs about every minute (and after each join). **Product path:** two people who both join the same dinner and receive a reciprocal personality/answer score are locked as a match. Solo-sim synthetic partner is opt-in via `LOCAL_DEV_AUTO_PARTNER=true`. Phone code step is UI-only (no SMS). This is **not** production auth or identity verification.
+
+For approved future identity integration, set `AUTH_ISSUER` to a trusted HTTPS OIDC issuer and `AUTH_AUDIENCE` to the API audience. JWT signature, issuer, audience and time claims are checked; account ownership derives from issuer plus subject, never request body IDs. A valid token is **not** identity/age/phone verification: profiles remain unverified, and clients cannot set verification. Test-only authentication helpers remain under `src/test/`. Do not collect real user data before the launch gates in [architecture](../docs/architecture.md).
 
 For PostgreSQL, set `DATABASE_URL=jdbc:postgresql://...`, `DATABASE_USER` and `DATABASE_PASSWORD`; use an isolated approved database. The PostgreSQL driver and Flyway module are included. H2 tests are not PostgreSQL verification. No database server, Docker daemon, external account or provider has been started by this work.
 

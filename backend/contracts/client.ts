@@ -11,15 +11,103 @@ export type Catalog = { version: string; revision?: string | null; questions: Qu
 export type Profile = { displayName: string; dateOfBirth: string | null; version: number; identityVerified: boolean };
 export type Event = { id: string; title: string; cityCode: string; neighborhood: string; timeZone: string | null; startsAt: string; endsAt: string };
 export type Disclosure = { eventId: string; neighborhood: string; startsAt: string; timeZone: string | null; state: 'HIDDEN' | 'REVEALED'; venueName: string | null; venueAddress: string | null; partnerName: string | null };
+export type Invitation = {
+  eventId: string;
+  state: 'WAITING' | 'MATCHED';
+  arrangementId: string | null;
+  title: string;
+  neighborhood: string;
+  timeZone: string | null;
+  startsAt: string;
+  endsAt: string;
+};
 export class ApiError extends Error {
   constructor(readonly status: number, readonly code: string, readonly outcomeUncertain = false, readonly currentRevision?: string) { super(code); }
 }
 export class TransportError extends Error {
   constructor(readonly outcomeUncertain: boolean) { super('NETWORK_OR_TIMEOUT'); }
 }
-export function createClient(baseUrl: string, getAccessToken: () => Promise<string>, transport: typeof fetch = fetch, options: { timeoutMs?: number } = {}) {
+function assertBackendBaseUrl(baseUrl: string, allowInsecureLocalhost: boolean) {
   const url = new URL(baseUrl);
-  if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) throw new Error('An explicitly configured HTTPS backend is required');
+  if (url.username || url.password || url.search || url.hash) throw new Error('Backend URL must not include credentials, query, or fragment');
+  const localHost = url.hostname === '127.0.0.1' || url.hostname === 'localhost' || url.hostname === '10.0.2.2';
+  if (url.protocol === 'https:') return;
+  if (allowInsecureLocalhost && url.protocol === 'http:' && localHost) return;
+  throw new Error('An explicitly configured HTTPS backend is required');
+}
+
+/** Loopback-only: run the matcher once (local-dev profile). */
+export async function runLocalDevMatcher(
+  baseUrl: string,
+  transport: typeof fetch = fetch,
+  options: { timeoutMs?: number } = {},
+): Promise<{ eventsScanned: number; pairsCreated: number; candidatesConsidered: number }> {
+  assertBackendBaseUrl(baseUrl, true);
+  const timeoutMs = options.timeoutMs ?? 10000;
+  const base = baseUrl.replace(/\/$/, '');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await transport(base + '/api/v1/local-dev/run-matcher', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({})) as { code?: string };
+      throw new ApiError(response.status, payload.code ?? 'LOCAL_DEV_MATCHER_FAILED');
+    }
+    return await response.json() as { eventsScanned: number; pairsCreated: number; candidatesConsidered: number };
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new TransportError(true);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/** Loopback local-dev session only. Rejects non-local bases. */
+export async function createLocalDevSession(
+  baseUrl: string,
+  transport: typeof fetch = fetch,
+  body: { subject?: string } = {},
+  options: { timeoutMs?: number } = {},
+): Promise<{ accessToken: string; expiresAt: string; tokenType: string }> {
+  assertBackendBaseUrl(baseUrl, true);
+  const timeoutMs = options.timeoutMs ?? 10000;
+  const base = baseUrl.replace(/\/$/, '');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await transport(base + '/api/v1/local-dev/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({})) as { code?: string };
+      throw new ApiError(response.status, payload.code ?? 'LOCAL_DEV_SESSION_FAILED');
+    }
+    return await response.json() as { accessToken: string; expiresAt: string; tokenType: string };
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new TransportError(true);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export function createClient(
+  baseUrl: string,
+  getAccessToken: () => Promise<string>,
+  transport: typeof fetch = fetch,
+  options: { timeoutMs?: number; allowInsecureLocalhost?: boolean } = {},
+) {
+  assertBackendBaseUrl(baseUrl, options.allowInsecureLocalhost === true);
   const timeoutMs = options.timeoutMs ?? 10000;
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new Error('Invalid timeout');
   const base = baseUrl.replace(/\/$/, '');
@@ -58,6 +146,7 @@ export function createClient(baseUrl: string, getAccessToken: () => Promise<stri
     saveAnswer: (id: string, answer: Answer, revision: string) => request<AnswerAcknowledgement>(`/me/answers/${encodeURIComponent(id)}`, 'PUT', answer, precondition(revision)),
     deleteAnswer: (id: string, revision: string) => request<AnswerAcknowledgement>(`/me/answers/${encodeURIComponent(id)}`, 'DELETE', undefined, precondition(revision)),
     interests: () => request<string[]>('/me/interests'),
+    invitations: () => request<Invitation[]>('/me/invitations'),
     join: (event: string) => request<{ state: 'INTEREST_RECORDED'; bookingConfirmed: false }>(`/me/interests/${encodeURIComponent(event)}`, 'PUT'),
     leave: (event: string) => request<void>(`/me/interests/${encodeURIComponent(event)}`, 'DELETE'),
     date: (id: string) => request<Disclosure>(`/me/dates/${encodeURIComponent(id)}`),

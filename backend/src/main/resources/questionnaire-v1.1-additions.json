@@ -1,6 +1,6 @@
 {
   "version": "onboarding-v1",
-  "revision": "onboarding-v1.1",
+  "revision": "onboarding-v1.6",
   "questions": [
     {
       "id": "goodNewsSupport",
@@ -187,6 +187,924 @@
         {
           "id": "o06",
           "label": "It depends on the goal",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "age",
+      "version": 1,
+      "title": "How old are you?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "optional": true,
+      "options": [
+        {
+          "id": "o01",
+          "label": "18",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "19",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "20",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "21",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "22",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "23",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "24",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "25",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o09",
+          "label": "26",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o10",
+          "label": "27",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o11",
+          "label": "28",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o12",
+          "label": "29",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o13",
+          "label": "30",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o14",
+          "label": "31",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o15",
+          "label": "32",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o16",
+          "label": "33",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o17",
+          "label": "34",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o18",
+          "label": "35",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o19",
+          "label": "36",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o20",
+          "label": "37",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o21",
+          "label": "38",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o22",
+          "label": "39",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o23",
+          "label": "40",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o24",
+          "label": "41",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o25",
+          "label": "42",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o26",
+          "label": "43",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o27",
+          "label": "44",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o28",
+          "label": "45",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o29",
+          "label": "46",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o30",
+          "label": "47",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o31",
+          "label": "48",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o32",
+          "label": "49",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o33",
+          "label": "50",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o34",
+          "label": "51",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o35",
+          "label": "52",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o36",
+          "label": "53",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o37",
+          "label": "54",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o38",
+          "label": "55",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o39",
+          "label": "56",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o40",
+          "label": "57",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o41",
+          "label": "58",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o42",
+          "label": "59",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o43",
+          "label": "60",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o44",
+          "label": "61",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o45",
+          "label": "62",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o46",
+          "label": "63",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o47",
+          "label": "64",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o48",
+          "label": "65",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o49",
+          "label": "66",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o50",
+          "label": "67",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o51",
+          "label": "68",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o52",
+          "label": "69",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o53",
+          "label": "70",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o54",
+          "label": "71",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o55",
+          "label": "72",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o56",
+          "label": "73",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o57",
+          "label": "74",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o58",
+          "label": "75",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o59",
+          "label": "76",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o60",
+          "label": "77",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o61",
+          "label": "78",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o62",
+          "label": "79",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o63",
+          "label": "80",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "careerDrive",
+      "version": 1,
+      "title": "How career-oriented are you right now?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "optional": true,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Career is my main focus",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Ambitious, with room for life",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Balanced with other priorities",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Building slowly",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Career is not my focus right now",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "partnerAgeRange",
+      "version": 1,
+      "title": "What partner ages are you open to?",
+      "kind": "PREFERENCE",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 2,
+      "optional": true,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Within 2 years of me",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Within 5 years of me",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Within 10 years of me",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Younger than me",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Older than me",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "A wide range is fine",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "partnerPriorities",
+      "version": 1,
+      "title": "What matters most in someone you meet?",
+      "kind": "PREFERENCE",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 3,
+      "optional": true,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Looks",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Career drive",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Personality",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Shared values",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Fitness",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Humor",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "Kindness",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "Ambition",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o09",
+          "label": "Emotional connection",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "partnerHasChildren",
+      "version": 1,
+      "title": "How do you feel about a partner who already has children?",
+      "kind": "PREFERENCE",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "optional": true,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Yes, I’m open to that",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "It depends on the situation",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "I’d prefer a partner without children",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "I’m not sure yet",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "fitnessLevel",
+      "version": 1,
+      "title": "How would you describe your fitness?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "optional": true,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Just getting started",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Moderately active",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Fit",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Very fit",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Athlete-level",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "partnerFitness",
+      "version": 1,
+      "title": "What fitness level are you hoping for in a partner?",
+      "kind": "PREFERENCE",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "optional": true,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Just getting started is fine",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Moderately active",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Fit",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Very fit",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Athlete-level",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Fitness is not a priority for me",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "partnerCareerDrive",
+      "version": 1,
+      "title": "How career-oriented do you want a partner to be?",
+      "kind": "PREFERENCE",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "optional": true,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Very career-focused",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Ambitious, with room for life",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Balanced",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Laid-back about career",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Career drive is not important to me",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "smokingOwn",
+      "version": 1,
+      "title": "Do you smoke or vape?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "optional": true,
+      "options": [
+        {
+          "id": "o01",
+          "label": "No, never",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "I used to, not anymore",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Occasionally",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Regularly",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "drinkingOwn",
+      "version": 1,
+      "title": "How do you usually drink?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "optional": true,
+      "options": [
+        {
+          "id": "o01",
+          "label": "I do not drink",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Rarely",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Socially now and then",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Regularly with friends",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Most days",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "dietary",
+      "version": 1,
+      "title": "What should a dinner plan respect?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 3,
+      "optional": true,
+      "options": [
+        {
+          "id": "o01",
+          "label": "No restrictions",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Vegetarian",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Vegan",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Halal",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Kosher",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Gluten-free",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "Dairy-free",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "Nut allergy or caution",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o09",
+          "label": "Pescatarian",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o10",
+          "label": "Another need",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "petsFit",
+      "version": 1,
+      "title": "How do you feel about a partner with pets?",
+      "kind": "PREFERENCE",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "optional": true,
+      "options": [
+        {
+          "id": "o01",
+          "label": "I would love that",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Fine with most pets",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Depends on the animal",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "I prefer a pet-free home",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "No strong preference",
           "declined": false,
           "exclusive": false
         }

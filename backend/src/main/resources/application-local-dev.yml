@@ -1,0 +1,8 @@
+app:
+  matching:
+    enabled: true
+    interval-ms: 60000
+    require-identity-verified: false
+  local-dev:
+    # false = match only when two real profiles join the same dinner and score; true = solo-sim partner
+    auto-partner: ${LOCAL_DEV_AUTO_PARTNER:false}

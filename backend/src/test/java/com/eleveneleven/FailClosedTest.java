@@ -6,6 +6,7 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 @SpringBootTest(properties={"app.auth.issuer=","spring.datasource.url=jdbc:h2:mem:closed;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"})
 class FailClosedTest {
@@ -15,5 +16,8 @@ class FailClosedTest {
         mvc.perform(get("/api/v1/me/profile").header("X-User-Id","someone")).andExpect(status().isUnauthorized());
         mvc.perform(get("/api/v1/me/profile").header("Authorization","Bearer arbitrary")).andExpect(status().isUnauthorized());
         mvc.perform(get("/health")).andExpect(status().isOk());
+        // local-dev controller is not on the classpath without the profile → 404 after permitAll
+        mvc.perform(post("/api/v1/local-dev/session").contentType("application/json").content("{}"))
+                .andExpect(status().isNotFound());
     }
 }

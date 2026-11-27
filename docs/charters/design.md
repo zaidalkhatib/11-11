@@ -2,7 +2,7 @@
 
 ## Shared authority and current scope
 
-Use the [project brief](../project-brief.md) and [decision log](../decision-log.md). Workstream owner and acceptance authority are unresolved (Q-14). Current scope includes original website design informed by the live 222 review (D-008–D-009); D-014 now also authorizes the local-only iOS-first onboarding and gated app UI iteration. Production app behavior remains future work.
+Use the [project brief](../project-brief.md) and [decision log](../decision-log.md). Workstream owner and acceptance authority are unresolved (Q-14). **Current priority (D-017):** finish UI for **18+ / San Diego / Dinner only**. Website design (D-008–D-009) and local iOS onboarding (D-014 / D-015, 88 steps) remain in scope. Brand lock-in (Q-13) and production app behavior remain open.
 
 ## Responsibilities
 
@@ -21,4 +21,4 @@ The live reference has been inspected according to the implementation lead; D-00
 
 ## Completion criteria
 
-The authorized deliverables reference the current shared documents, remain exclusively 1:1, use original assets and wording, identify accessibility considerations and missing states, and receive explicit acceptance from the user or a delegated approver. Every design proposal and unresolved behavior is labeled; no implied product decisions remain in the handoff. The website and D-014 local-only iOS-first UI prototype are authorized. The current app uses proposed question wording and demo experiences; production signup, matching and safety behavior still await scoped product decisions.
+The authorized deliverables reference the current shared documents, remain exclusively 1:1, use original assets and wording, identify accessibility considerations and missing states, and receive explicit acceptance from the user or a delegated approver. Every design proposal and unresolved behavior is labeled; no implied product decisions remain in the handoff. The website and D-014/D-015 local-only iOS-first UI prototype are authorized. The current app uses proposed 88-step question wording and demo experiences; accepting that questionnaire, brand details (Q-13), and production signup/matching/safety behavior still await scoped product decisions.
