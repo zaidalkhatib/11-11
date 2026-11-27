@@ -11,7 +11,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from 'react';
-import { callingCodes, validatePhone, type CountryId } from '../../packages/domain/signup';
+import { callingCodes, validatePreviewPhone, type CountryId } from '../../packages/domain/signup';
 import { tokens } from '../../packages/design-tokens';
 
 type Segment = { text: string; bold?: boolean };
@@ -137,7 +137,7 @@ export function SignupPage() {
 
   function onSubmit(event: FormEvent) {
     event.preventDefault();
-    const issue = validatePhone(phone, country);
+    const issue = validatePreviewPhone(phone, country);
     setError(issue);
     if (issue) {
       phoneRef.current?.focus();
