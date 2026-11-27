@@ -71,6 +71,52 @@ class MatchingAllocatorTest {
         assertThat(allocator.runOnce().pairsCreated()).isZero();
     }
 
+    @Test
+    void previouslyMatchedPairIsNeverRematchedOnLaterEvent() {
+        assertThat(allocator.runOnce().pairsCreated()).isEqualTo(1);
+        UUID later = UUID.randomUUID();
+        db.update(
+                "INSERT INTO experience(id,title,city_code,starts_at,ends_at,interest_open,neighborhood,time_zone) VALUES (?,?,?,?,?,TRUE,?,?)",
+                later, "Second dinner", "san-diego",
+                OffsetDateTime.parse("2099-12-08T19:00:00-08:00"),
+                OffsetDateTime.parse("2099-12-08T21:00:00-08:00"),
+                "Little Italy, San Diego", "America/Los_Angeles");
+        interests.join(a, later);
+        interests.join(b, later);
+        assertThat(allocator.previouslyMatched(a, b)).isTrue();
+        assertThat(allocator.runOnce().pairsCreated()).isZero();
+        assertThat(db.queryForObject("SELECT COUNT(*) FROM date_arrangement WHERE event_id=?", Integer.class, later)).isZero();
+        assertThat(db.queryForObject("SELECT interest_open FROM experience WHERE id=?", Boolean.class, later)).isTrue();
+    }
+
+    @Test
+    void priorMatchDoesNotBlockPairingWithSomeoneNew() {
+        assertThat(allocator.runOnce().pairsCreated()).isEqualTo(1);
+        String c = Owners.id(jwt("cara"));
+        profiles.put(c, new ProfileService.Update("Cara", LocalDate.of(1996, 4, 4), null));
+        seedCompatible(c, "o02", "o01"); // woman interested in men — can match alice (a)
+        UUID later = UUID.randomUUID();
+        db.update(
+                "INSERT INTO experience(id,title,city_code,starts_at,ends_at,interest_open,neighborhood,time_zone) VALUES (?,?,?,?,?,TRUE,?,?)",
+                later, "Third dinner", "san-diego",
+                OffsetDateTime.parse("2099-12-15T19:00:00-08:00"),
+                OffsetDateTime.parse("2099-12-15T21:00:00-08:00"),
+                "North Park, San Diego", "America/Los_Angeles");
+        interests.join(a, later);
+        interests.join(b, later); // prior match with a — skipped
+        interests.join(c, later);
+        assertThat(allocator.runOnce().pairsCreated()).isEqualTo(1);
+        assertThat(db.queryForObject(
+                "SELECT COUNT(*) FROM date_participant WHERE event_id=? AND owner_id=?", Integer.class, later, a))
+                .isEqualTo(1);
+        assertThat(db.queryForObject(
+                "SELECT COUNT(*) FROM date_participant WHERE event_id=? AND owner_id=?", Integer.class, later, c))
+                .isEqualTo(1);
+        assertThat(db.queryForObject(
+                "SELECT COUNT(*) FROM date_participant WHERE event_id=? AND owner_id=?", Integer.class, later, b))
+                .isZero();
+    }
+
     private void seedCompatible(String owner, String gender, String interestedIn) {
         // Only catalog-backed IDs (backend questionnaire still catching up to mobile).
         answer(owner, "gender", gender);

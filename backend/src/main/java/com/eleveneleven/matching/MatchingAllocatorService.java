@@ -68,6 +68,8 @@ public class MatchingAllocatorService {
             for (int i = 0; i < waiters.size(); i++) {
                 for (int j = i + 1; j < waiters.size(); j++) {
                     String left = waiters.get(i), right = waiters.get(j);
+                    // Never rematch a pair that has already been locked together.
+                    if (previouslyMatched(left, right)) continue;
                     Result result = engine.evaluate(
                             candidate(left, event),
                             candidate(right, event),
@@ -91,11 +93,28 @@ public class MatchingAllocatorService {
         return new RunSummary(events, pairs, candidates);
     }
 
+    /** True if these two owners already share any past arrangement (do not rematch). */
+    public boolean previouslyMatched(String a, String b) {
+        Integer count = db.queryForObject(
+                """
+                SELECT COUNT(*) FROM date_participant p1
+                JOIN date_participant p2
+                  ON p1.arrangement_id = p2.arrangement_id
+                 AND p1.owner_id <> p2.owner_id
+                WHERE p1.owner_id=? AND p2.owner_id=?
+                """,
+                Integer.class,
+                a,
+                b);
+        return count != null && count > 0;
+    }
+
     private boolean lockPair(UUID event, String a, String b, double score) {
         // Re-check no arrangement under row lock.
         db.queryForList("SELECT id FROM experience WHERE id=? FOR UPDATE", event);
         Integer arranged = db.queryForObject("SELECT COUNT(*) FROM date_arrangement WHERE event_id=? AND state<>'CANCELLED'", Integer.class, event);
         if (arranged != null && arranged > 0) return false;
+        if (previouslyMatched(a, b)) return false;
         Integer stillA = db.queryForObject("SELECT COUNT(*) FROM event_interest WHERE owner_id=? AND event_id=?", Integer.class, a, event);
         Integer stillB = db.queryForObject("SELECT COUNT(*) FROM event_interest WHERE owner_id=? AND event_id=?", Integer.class, b, event);
         if (stillA == null || stillA == 0 || stillB == null || stillB == 0) return false;

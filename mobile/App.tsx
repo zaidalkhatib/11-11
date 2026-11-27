@@ -161,12 +161,6 @@ export function InviteEntranceHost() {
     </View>
   );
 }
-const homeRoutes = {
-  "Events": "/home",
-  Invites: "/invitations",
-  You: "/you",
-} as const;
-
 const intros = [
   {
     label: "A DIFFERENT KIND OF BEGINNING",
@@ -519,7 +513,7 @@ function SectionComplete({ question, next, back, reduce }: { question:number; ne
   };
   return <><ScreenHeader onBack={back}/><ScrollView contentContainerStyle={[s.questionScroll,{flexGrow:1,justifyContent:"center"}]}><Reveal reduce={reduce}><Text style={s.eyebrow}>SECTION {onboardingSections.indexOf(section as typeof onboardingSections[number])+1} COMPLETE</Text><Text style={s.questionTitle}>{section}.{"\n"}A little more you.</Text><Text style={s.helper}>{following ? descriptions[following] : "Your introduction is ready. Take a moment to review it before stepping inside."}</Text><Text style={s.inputNote}>Your answers are kept as you continue. You can revisit them.</Text></Reveal></ScrollView><View style={s.questionBottom}><Button label={following ? "Next: "+following : "Review my introduction"} onPress={next}/></View></>;
 }
-function Questionnaire({ index, answers, patch, next, back, reduce }: { index: number; answers: Answers; patch: (patch: Partial<Answers>) => void; next: () => void; back: () => void; reduce: boolean }) {
+function Questionnaire({ index, answers, patch, next, back, reduce, busy = false }: { index: number; answers: Answers; patch: (patch: Partial<Answers>) => void; next: () => void; back: () => void; reduce: boolean; busy?: boolean }) {
   const [code, setCode] = useState("");
   const [photoError, setPhotoError] = useState("");
   const [picking, setPicking] = useState(false);
@@ -560,7 +554,7 @@ function Questionnaire({ index, answers, patch, next, back, reduce }: { index: n
       </View>}
       {trait&&<TraitChoices question={trait} values={answers.traits?.[trait.key]??[]} onChange={values=>patch({traits:{...answers.traits,[trait.key]:values}})}/>}
     </View></Reveal></ScrollView>
-    <View style={s.questionBottom}><Button label={index===PHOTO_STEP?(valid?"Continue":"Add a photo to continue"):index===0||index===2||index===3?"Next":nextQuestion(index)===undefined?"Finish this section":"Continue"} disabled={!valid} onPress={next}/></View>
+    <View style={s.questionBottom}><Button label={busy ? "Signing you in…" : index===PHOTO_STEP?(valid?"Continue":"Add a photo to continue"):index===0||index===2||index===3?"Next":nextQuestion(index)===undefined?"Finish this section":"Continue"} disabled={!valid || busy} onPress={next}/></View>
   </>;
 }
 type TraitQuestion = (typeof personalityQuestions)[number];
@@ -1215,17 +1209,16 @@ export default function AppContent() {
   const router = useRouter();
   const pathname = usePathname();
   const unlocked = flow.stage === "home";
-  const homePath = Object.values(homeRoutes).includes(
-    pathname as (typeof homeRoutes)[keyof typeof homeRoutes],
-  );
   useEffect(() => {
+    // Only bounce locked users off home routes. Do NOT replace / → /home on unlock:
+    // index and home both remount App, which flashes a white/empty frame.
     if (!unlocked && pathname !== "/") router.replace("/");
-    if (unlocked && !homePath) router.replace("/home");
-  }, [unlocked, pathname, homePath, router]);
+  }, [unlocked, pathname, router]);
   const reduce = useGentleMotion();
   const { width } = useWindowDimensions();
   const lastPress = useRef(0);
   const [signingIn, setSigningIn] = useState(false);
+  const homeFade = useRef(new Animated.Value(unlocked ? 1 : 0)).current;
   const next = () => {
     const now = Date.now();
     if (now - lastPress.current < 400 || signingIn) return;
@@ -1234,14 +1227,16 @@ export default function AppContent() {
     // Phone-first login: known numbers skip name/city; code step opens home.
     if (flow.stage === "questions" && (flow.question === 0 || flow.question === 3)) {
       const phone = flow.answers.phone;
+      const question = flow.question;
       setSigningIn(true);
       void tryReturningLogin(phone)
         .then((known) => {
-          if (known && flow.question === 0) {
+          if (known && question === 0) {
             dispatch({ type: "phoneKnown", name: known.name, phone });
             return;
           }
-          if (known && flow.question === 3) {
+          if (known && question === 3) {
+            // Stay on / and fade into home — no route remount.
             dispatch({ type: "returningHome", name: known.name, phone });
             return;
           }
@@ -1267,12 +1262,31 @@ export default function AppContent() {
     return () => sub.remove();
   }, [flow.stage, flow.intro, dispatch]);
   const edit = (question: number) => dispatch({ type: "edit", question });
-  if (reduce === null || unlocked !== homePath)
+  const showHome = unlocked || flow.stage === "home";
+  useEffect(() => {
+    if (!showHome) {
+      homeFade.setValue(0);
+      return;
+    }
+    if (reduce) {
+      homeFade.setValue(1);
+      return;
+    }
+    homeFade.setValue(0);
+    Animated.timing(homeFade, {
+      toValue: 1,
+      duration: 380,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [showHome, reduce, homeFade]);
+  if (reduce === null) {
     return (
       <View style={s.outer}>
         <StatusBar style="light" />
       </View>
     );
+  }
   return (
     <View style={s.outer}>
       <StatusBar style="light" />
@@ -1282,7 +1296,7 @@ export default function AppContent() {
             style={s.safe}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
-            {flow.stage === "intro" && (
+            {!showHome && flow.stage === "intro" && (
               <Intro
                 index={flow.intro}
                 next={next}
@@ -1290,7 +1304,7 @@ export default function AppContent() {
                 reduce={reduce}
               />
             )}
-            {flow.stage === "questions" && (
+            {!showHome && flow.stage === "questions" && (
               <Questionnaire
                 index={flow.question}
                 answers={flow.answers}
@@ -1298,10 +1312,11 @@ export default function AppContent() {
                 next={next}
                 back={back}
                 reduce={reduce}
+                busy={signingIn}
               />
             )}
-            {flow.stage === "section" && <SectionComplete question={flow.question} next={next} back={back} reduce={reduce}/>}
-            {flow.stage === "review" && (
+            {!showHome && flow.stage === "section" && <SectionComplete question={flow.question} next={next} back={back} reduce={reduce}/>}
+            {!showHome && flow.stage === "review" && (
               <Review
                 answers={flow.answers}
                 edit={edit}
@@ -1310,7 +1325,7 @@ export default function AppContent() {
                 reduce={reduce}
               />
             )}
-            {flow.stage === "conditions" && (
+            {!showHome && flow.stage === "conditions" && (
               <Conditions
                 accepted={flow.conditionsAccepted}
                 toggle={(id) => dispatch({ type: "toggleCondition", id })}
@@ -1320,12 +1335,13 @@ export default function AppContent() {
                 answers={flow.answers}
               />
             )}
-            {flow.stage === "home" && (
-              <Home
-                answers={flow.answers}
-                reduce={reduce}
-
-              />
+            {showHome && (
+              <Animated.View style={{ flex: 1, opacity: homeFade }}>
+                <Home
+                  answers={flow.answers}
+                  reduce={reduce}
+                />
+              </Animated.View>
             )}
           </KeyboardAvoidingView>
         </SafeAreaView>
