@@ -1,6 +1,7 @@
 server:
-  address: 127.0.0.1
-  port: 8080
+  # Loopback locally; Railway/public hosts set SERVER_ADDRESS=0.0.0.0 and PORT.
+  address: ${SERVER_ADDRESS:127.0.0.1}
+  port: ${PORT:8080}
   error:
     include-message: never
     include-stacktrace: never
