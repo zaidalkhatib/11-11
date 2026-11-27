@@ -7,8 +7,10 @@ JSON only. Private paths require a validated bearer token. All `/api/v1/me/` res
 | GET `/health` | none | up, FOUNDATION_NO_PAIRING |
 | GET `/api/v1/questionnaire` | none | catalog compatibility version, revision, definitions, stable option IDs and current labels |
 | GET `/api/v1/events` | none | up to 100 upcoming open events ordered by time/id; neighborhood and timezone, never venue |
-| GET `/api/v1/me/profile` | bearer | own displayName, DOB, version, identityVerified |
-| PUT `/api/v1/me/profile` | displayName, dateOfBirth ISO date or null, expectedVersion | own profile; null expectedVersion creates only, numeric version updates only |
+| GET `/api/v1/me/profile` | bearer | own displayName, DOB, version, identityVerified, photoUrl |
+| PUT `/api/v1/me/profile` | displayName, dateOfBirth ISO date or null, expectedVersion, optional photoUrl | own profile; null expectedVersion creates only, numeric version updates only; blank photoUrl leaves existing |
+| DELETE `/api/v1/me/account` | bearer | `{state:ACCOUNT_DELETED}`; erases profile, answers, interests, push tokens, matches involving the owner; idempotent if already gone |
+| PUT `/api/v1/me/push-token` | bearer, token, platform | `{state:PUSH_TOKEN_SAVED}`; upserts Expo/device push token for the owner |
 | GET `/api/v1/me/answers` | bearer | `{revision,answers}` snapshot plus strong ETag |
 | PUT `/api/v1/me/answers/{questionId}` | If-Match plus version, status, choices, sensitiveConsent | `{revision}` and new ETag; replaces own answer conditionally |
 | DELETE `/api/v1/me/answers/{questionId}` | bearer + If-Match | `{revision}` and new ETag; conditional deletion |

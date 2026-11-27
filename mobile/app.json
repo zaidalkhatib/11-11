@@ -1,20 +1,67 @@
 {
   "expo": {
-    "name": "11:11 Preview",
-    "slug": "eleven-eleven-preview",
+    "name": "11:11",
+    "slug": "eleven-eleven",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#21151f",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#21151f"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.eleveneleven.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "11:11 uses your photo library so you can add a profile photo.",
+        "NSCameraUsageDescription": "11:11 uses the camera so you can take a profile photo.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.eleveneleven.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png",
+        "backgroundColor": "#21151f"
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
-      "name": "11:11 \u00b7 A first hello",
+      "name": "11:11 · A first hello",
+      "favicon": "./assets/favicon.png",
       "bundler": "metro",
       "output": "single"
     },
-    "plugins": ["expo-router"],
-    "scheme": "elevenelevenpreview"
+    "plugins": [
+      "expo-router",
+      "expo-image-picker",
+      "expo-dev-client",
+      [
+        "expo-notifications",
+        {
+          "color": "#21151f"
+        }
+      ]
+    ],
+    "scheme": "eleveneleven",
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "5b76f641-5ff5-4151-a0b9-0d145a0665d0"
+      }
+    },
+    "owner": "1111dates"
   }
 }

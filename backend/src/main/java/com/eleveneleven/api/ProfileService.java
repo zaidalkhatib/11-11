@@ -10,13 +10,18 @@ import com.eleveneleven.questionnaire.Catalog;
 
 @Service
 public class ProfileService {
-    public record Update(@NotBlank @Size(max=30) String displayName, @Past LocalDate dateOfBirth, @Min(0) Long expectedVersion) {}
-    public record Profile(String displayName, LocalDate dateOfBirth, long version, boolean identityVerified) {}
+    public record Update(@NotBlank @Size(max=30) String displayName, @Past LocalDate dateOfBirth, @Min(0) Long expectedVersion, @Size(max=500) String photoUrl) {
+        public Update(String displayName, LocalDate dateOfBirth, Long expectedVersion) {
+            this(displayName, dateOfBirth, expectedVersion, null);
+        }
+    }
+    public record Profile(String displayName, LocalDate dateOfBirth, long version, boolean identityVerified, String photoUrl) {}
+    public record PushTokenUpdate(@NotBlank @Size(max=512) String token, @NotBlank @Size(max=20) String platform) {}
     private final JdbcTemplate db;
     private final Catalog catalog;
     public ProfileService(JdbcTemplate db,Catalog catalog) { this.db=db; this.catalog=catalog; }
     public Profile get(String owner) {
-        return db.query("SELECT * FROM profile WHERE owner_id=?", (r,n) -> new Profile(r.getString("display_name"),r.getObject("date_of_birth",LocalDate.class),r.getLong("version"),r.getBoolean("identity_verified")),owner)
+        return db.query("SELECT * FROM profile WHERE owner_id=?", (r,n) -> new Profile(r.getString("display_name"),r.getObject("date_of_birth",LocalDate.class),r.getLong("version"),r.getBoolean("identity_verified"),r.getString("photo_url")),owner)
                 .stream().findFirst().orElseThrow(() -> new ApiException(404,"PROFILE_REQUIRED"));
     }
     public void lock(String owner) {
@@ -28,14 +33,33 @@ public class ProfileService {
         if (u.dateOfBirth()!=null && u.dateOfBirth().isAfter(LocalDate.now(ZoneOffset.UTC).minusYears(18)))
             throw new ApiException(400,"ADULTS_ONLY");
         if (u.expectedVersion()==null) {
-            db.update("INSERT INTO profile(owner_id,display_name,date_of_birth) VALUES (?,?,?)",owner,u.displayName().trim(),u.dateOfBirth());
+            db.update("INSERT INTO profile(owner_id,display_name,date_of_birth,photo_url) VALUES (?,?,?,?)",owner,u.displayName().trim(),u.dateOfBirth(),blankToNull(u.photoUrl()));
         } else {
             // DOB change invalidates any previous verification; clients can never set verification.
-            int count=db.update("UPDATE profile SET display_name=?,date_of_birth=?,identity_verified=FALSE,version=version+1 WHERE owner_id=? AND version=?",
-                    u.displayName().trim(),u.dateOfBirth(),owner,u.expectedVersion());
+            int count=db.update("UPDATE profile SET display_name=?,date_of_birth=?,photo_url=COALESCE(?,photo_url),identity_verified=FALSE,version=version+1 WHERE owner_id=? AND version=?",
+                    u.displayName().trim(),u.dateOfBirth(),blankToNull(u.photoUrl()),owner,u.expectedVersion());
             if (count!=1) throw new ApiException(409,"STALE_PROFILE");
         }
         return get(owner);
+    }
+    @Transactional
+    public void savePushToken(String owner, PushTokenUpdate update) {
+        lock(owner);
+        String token = update.token().trim();
+        String platform = update.platform().trim();
+        int updated = db.update(
+                "UPDATE push_token SET platform=?, updated_at=CURRENT_TIMESTAMP WHERE owner_id=? AND token=?",
+                platform, owner, token);
+        if (updated == 0) {
+            db.update(
+                    "INSERT INTO push_token(owner_id, token, platform) VALUES (?,?,?)",
+                    owner, token, platform);
+        }
+    }
+    private static String blankToNull(String value) {
+        if (value == null) return null;
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
     public record AnswerSnapshot(String revision, Map<String,Catalog.Answer> answers) {}
     public record AnswerRevision(String revision) {}
@@ -71,6 +95,31 @@ public class ProfileService {
         long next=advance(owner,expectedRevision);
         db.update("DELETE FROM answer WHERE owner_id=? AND question_id=?",owner,id);
         return new AnswerRevision(Long.toString(next));
+    }
+    /** Hard erase for account deletion. Idempotent if profile already gone. */
+    @Transactional
+    public void erase(String owner) {
+        if (db.queryForList("SELECT owner_id FROM profile WHERE owner_id=? FOR UPDATE", owner).isEmpty()) return;
+        List<UUID> arrangements = db.query(
+                "SELECT arrangement_id FROM date_participant WHERE owner_id=?",
+                (r, n) -> r.getObject(1, UUID.class),
+                owner);
+        for (UUID arrangement : arrangements) {
+            UUID event = db.queryForObject(
+                    "SELECT event_id FROM date_arrangement WHERE id=?", UUID.class, arrangement);
+            db.update("DELETE FROM match_notification WHERE arrangement_id=?", arrangement);
+            db.update("DELETE FROM date_participant WHERE arrangement_id=?", arrangement);
+            db.update("UPDATE date_arrangement SET state='CANCELLED' WHERE id=?", arrangement);
+            if (event != null) {
+                db.update("UPDATE experience SET interest_open=TRUE WHERE id=? AND starts_at>CURRENT_TIMESTAMP", event);
+            }
+        }
+        db.update("DELETE FROM match_notification WHERE owner_id=?", owner);
+        db.update("DELETE FROM push_token WHERE owner_id=?", owner);
+        db.update("DELETE FROM event_interest WHERE owner_id=?", owner);
+        db.update("DELETE FROM safety_exclusion WHERE reporter_id=? OR target_id=?", owner, owner);
+        db.update("DELETE FROM answer WHERE owner_id=?", owner);
+        db.update("DELETE FROM profile WHERE owner_id=?", owner);
     }
     private long advance(String owner,long expectedRevision) {
         long current=db.queryForObject("SELECT answers_revision FROM profile WHERE owner_id=?",Long.class,owner);

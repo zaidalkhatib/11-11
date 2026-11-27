@@ -29,6 +29,9 @@ public final class MatchingEngine {
                 throw new IllegalArgumentException("Invalid policy");
             if(version.equals("exploratory-v3") && !domainWeights.keySet().equals(Set.of("shared_interests","partner_energy")))
                 throw new IllegalArgumentException("Invalid exploratory-v3 domains");
+            if(version.equals("reciprocal-v2") && !domainWeights.keySet().equals(Set.of(
+                    "reciprocal_prefs","beliefs_background","shared_interests","values_personality","dinner_logistics")))
+                throw new IllegalArgumentException("Invalid reciprocal-v2 domains");
         }
         public static Policy exploratoryV3() { return new Policy("exploratory-v3",Map.of("shared_interests",0.6,"partner_energy",0.4),0.5,2); }
         /** D-022 reciprocal scoring draft — looks + questionnaire soft fit. */
@@ -37,6 +40,15 @@ public final class MatchingEngine {
                     "reciprocal_prefs", 0.40,
                     "shared_interests", 0.25,
                     "values_personality", 0.25,
+                    "dinner_logistics", 0.10), 0.35, 2);
+        }
+        /** Algo cut: looks/faith/ethnicity/politics + finance soft fit. */
+        public static Policy reciprocalV2() {
+            return new Policy("reciprocal-v2", Map.of(
+                    "reciprocal_prefs", 0.30,
+                    "beliefs_background", 0.25,
+                    "shared_interests", 0.20,
+                    "values_personality", 0.15,
                     "dinner_logistics", 0.10), 0.35, 2);
         }
     }
@@ -90,9 +102,21 @@ public final class MatchingEngine {
             evidence.add(new Evidence("career","reciprocal_prefs",career(a,b),career(b,a)));
             evidence.add(new Evidence("fitness","reciprocal_prefs",fitness(a,b),fitness(b,a)));
             evidence.add(new Evidence("age","reciprocal_prefs",ageFit(a,b,context.clock()),ageFit(b,a,context.clock())));
+            if(policy.version().equals("reciprocal-v2")) {
+                evidence.add(new Evidence("financialStability","reciprocal_prefs",finance(a,b),finance(b,a)));
+            }
+        }
+        if(policy.domainWeights().containsKey("beliefs_background")) {
+            evidence.add(new Evidence("faithImportance","beliefs_background",ordinalCloseness(a,b,"faithImportance",5),ordinalCloseness(a,b,"faithImportance",5)));
+            evidence.add(new Evidence("sharedFaith->religion","beliefs_background",faithFit(a,b),faithFit(b,a)));
+            evidence.add(new Evidence("sharedBackground->ethnicity","beliefs_background",ethnicityFit(a,b),ethnicityFit(b,a)));
+            evidence.add(new Evidence("politicalFit->outlook","beliefs_background",politicsFit(a,b),politicsFit(b,a)));
         }
         if(policy.domainWeights().containsKey("values_personality")) {
-            for(String key:List.of("values","pace","communication","humor","planning")) {
+            var personalityKeys = policy.version().equals("reciprocal-v2")
+                    ? List.of("pace","communication","humor","planning","independence")
+                    : List.of("values","pace","communication","humor","planning");
+            for(String key:personalityKeys) {
                 evidence.add(new Evidence(key,"values_personality",jaccard(a,b,key),jaccard(a,b,key)));
             }
         }
@@ -172,6 +196,55 @@ public final class MatchingEngine {
             else if(Collections.disjoint(known(a,"religion"),known(b,"religion"))) failed.add("EXPLICIT_FAITH_BOUNDARY");
         }
         if(known(a,"childrenAlignment").contains("o01")) missing.add("NORMALIZED_FAMILY_PLANS_REQUIRED");
+        dealbreakers(a, b, failed, missing);
+    }
+    /** Explicit dealbreaker screen (max 3). o09 = none. */
+    private static void dealbreakers(Candidate a, Candidate b, Set<String> failed, Set<String> missing) {
+        var picks = known(a, "dealbreakers");
+        if (picks.isEmpty() || picks.contains("o09")) return;
+        if (picks.contains("o02")) { // smoke- and vape-free
+            var fact = b.operationalFacts().get("smoking");
+            if (fact == null) missing.add("SELF_SMOKING_REQUIRED");
+            else if (!fact.equals("NONE")) failed.add("DEALBREAKER_SMOKE_FREE");
+        }
+        if (picks.contains("o03")) { // alcohol-free
+            var fact = b.operationalFacts().get("drinking");
+            if (fact == null) missing.add("SELF_DRINKING_REQUIRED");
+            else if (!fact.equals("NONE")) failed.add("DEALBREAKER_ALCOHOL_FREE");
+        }
+        if (picks.contains("o04")) { // same faith
+            var mine = known(a, "religion");
+            var theirs = known(b, "religion");
+            if (mine.isEmpty() || theirs.isEmpty()) missing.add("CONSENTED_FAITH_FACTS_REQUIRED");
+            else if (Collections.disjoint(mine, theirs)) failed.add("DEALBREAKER_SAME_FAITH");
+        }
+        if (picks.contains("o05")) { // monogamous
+            var structure = single(b, "relationshipStructure");
+            if (structure.isBlank()) missing.add("RELATIONSHIP_STRUCTURE_REQUIRED");
+            else if (!structure.equals("o01")) failed.add("DEALBREAKER_MONOGAMOUS");
+        }
+        if (picks.contains("o06")) { // pet-free home
+            var pets = known(b, "pets");
+            if (pets.isEmpty()) missing.add("PETS_FACT_REQUIRED");
+            else if (!(pets.size() == 1 && pets.contains("o07"))) failed.add("DEALBREAKER_PET_FREE");
+        }
+        if (picks.contains("o07")) { // no children already
+            var have = single(b, "haveChildren");
+            if (have.isBlank()) missing.add("HAVE_CHILDREN_REQUIRED");
+            else if (!have.equals("o01")) failed.add("DEALBREAKER_NO_CHILDREN_ALREADY");
+        }
+        if (picks.contains("o01")) { // same plans about children
+            var mine = single(a, "children");
+            var theirs = single(b, "children");
+            if (mine.isBlank() || theirs.isBlank()) missing.add("NORMALIZED_FAMILY_PLANS_REQUIRED");
+            else if (!mine.equals(theirs)) failed.add("DEALBREAKER_CHILDREN_PLANS");
+        }
+        if (picks.contains("o08")) { // similar politics — at most 1 step on Left…Right
+            Integer left = politicalOrdinal(single(a, "politicalOutlook"));
+            Integer right = politicalOrdinal(single(b, "politicalOutlook"));
+            if (left == null || right == null) missing.add("POLITICAL_OUTLOOK_REQUIRED");
+            else if (Math.abs(left - right) > 1) failed.add("DEALBREAKER_SIMILAR_POLITICS");
+        }
     }
     private static Set<String> known(Candidate c,String key) {
         var a=c.answers().get(key);
@@ -237,6 +310,62 @@ public final class MatchingEngine {
         if(windows.contains("o05") && ageB>ageA) ok=true;
         if(windows.contains("o06")) ok=true;
         return ok?1.0:0.2;
+    }
+    /** Soft finance preference vs partner career drive — no income asked. */
+    private static Double finance(Candidate a,Candidate b) {
+        Integer importance = ordinal(single(a,"financialStabilityImportance"), 5);
+        Integer have = ordinal(single(b,"careerDrive"), 5);
+        if(importance==null || have==null) return null;
+        if(importance<=2) return 0.75;
+        double want = importance>=4 ? 1.5 : 2.5; // very/essential → ambitious; somewhat → balanced
+        return 1.0 - Math.min(1.0, Math.abs(want-have)/4.0);
+    }
+    private static Double ordinalCloseness(Candidate a,Candidate b,String key,int max) {
+        Integer left = ordinal(single(a,key), max);
+        Integer right = ordinal(single(b,key), max);
+        if(left==null || right==null) return null;
+        return 1.0 - Math.min(1.0, Math.abs(left-right)/(double)Math.max(1,max-1));
+    }
+    /** Open / similar-values → no hard religion demand; prefer/essential → overlap soft score. */
+    private static Double faithFit(Candidate a,Candidate b) {
+        var pref = known(a,"sharedFaith");
+        if(pref.size()!=1) return null;
+        String p = pref.iterator().next();
+        if(p.equals("o01") || p.equals("o02")) return null;
+        var mine = known(a,"religion"); var theirs = known(b,"religion");
+        if(mine.isEmpty() || theirs.isEmpty() || mine.contains("o11") || theirs.contains("o11")) return null;
+        return Collections.disjoint(mine,theirs) ? 0.0 : 1.0;
+    }
+    /** Soft only — never invents an ethnic hard fail. */
+    private static Double ethnicityFit(Candidate a,Candidate b) {
+        var pref = known(a,"sharedBackground");
+        if(pref.size()!=1) return null;
+        String p = pref.iterator().next();
+        if(p.equals("o01") || p.equals("o02")) return null;
+        var mine = known(a,"ethnicity"); var theirs = known(b,"ethnicity");
+        if(mine.isEmpty() || theirs.isEmpty() || mine.contains("o12") || theirs.contains("o12")) return null;
+        var union=new HashSet<>(mine); union.addAll(theirs);
+        var intersection=new HashSet<>(mine); intersection.retainAll(theirs);
+        double overlap = (double)intersection.size()/union.size();
+        return p.equals("o04") ? overlap : 0.5 + 0.5*overlap;
+    }
+    /** Soft politics — Independent / not engaged / prefer-not = no evidence. */
+    private static Double politicsFit(Candidate a,Candidate b) {
+        var fit = known(a,"politicalFit");
+        if(fit.size()!=1) return null;
+        String importance = fit.iterator().next();
+        if(importance.equals("o03") || importance.equals("o04")) return null;
+        Integer left = politicalOrdinal(single(a,"politicalOutlook"));
+        Integer right = politicalOrdinal(single(b,"politicalOutlook"));
+        if(left==null || right==null) return null;
+        double closeness = 1.0 - Math.min(1.0, Math.abs(left-right)/4.0);
+        return importance.equals("o01") ? closeness : 0.5 + 0.5*closeness;
+    }
+    private static Integer politicalOrdinal(String option) {
+        return switch(option) {
+            case "o01" -> 1; case "o02" -> 2; case "o03" -> 3; case "o04" -> 4; case "o05" -> 5;
+            default -> null; // independent / not engaged / prefer not
+        };
     }
     private static Integer rating(String option) {
         if(option==null || option.isBlank() || option.charAt(0)!='o') return null;

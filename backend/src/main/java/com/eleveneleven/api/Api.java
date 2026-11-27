@@ -16,6 +16,14 @@ public class Api {
     @GetMapping("/api/v1/events") Object events() { return interests.events(); }
     @GetMapping("/api/v1/me/profile") Object profile(@AuthenticationPrincipal Jwt jwt) { return profiles.get(Owners.id(jwt)); }
     @PutMapping("/api/v1/me/profile") Object profile(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody ProfileService.Update request) { return profiles.put(Owners.id(jwt),request); }
+    @DeleteMapping("/api/v1/me/account") Object erase(@AuthenticationPrincipal Jwt jwt) {
+        profiles.erase(Owners.id(jwt));
+        return Map.of("state", "ACCOUNT_DELETED");
+    }
+    @PutMapping("/api/v1/me/push-token") Object pushToken(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody ProfileService.PushTokenUpdate request) {
+        profiles.savePushToken(Owners.id(jwt), request);
+        return Map.of("state", "PUSH_TOKEN_SAVED");
+    }
     @GetMapping("/api/v1/me/answers") Object answers(@AuthenticationPrincipal Jwt jwt) {
         var snapshot=profiles.snapshot(Owners.id(jwt));
         return ResponseEntity.ok().eTag(AnswerVersions.etag(snapshot.revision())).body(snapshot);

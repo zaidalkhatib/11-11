@@ -1,6 +1,6 @@
 {
   "version": "onboarding-v1",
-  "revision": "onboarding-v1.6",
+  "revision": "onboarding-v1.7",
   "questions": [
     {
       "id": "goodNewsSupport",
@@ -755,7 +755,7 @@
       "options": [
         {
           "id": "o01",
-          "label": "Yes, I’m open to that",
+          "label": "Yes, I\u2019m open to that",
           "declined": false,
           "exclusive": false
         },
@@ -767,13 +767,13 @@
         },
         {
           "id": "o03",
-          "label": "I’d prefer a partner without children",
+          "label": "I\u2019d prefer a partner without children",
           "declined": false,
           "exclusive": false
         },
         {
           "id": "o04",
-          "label": "I’m not sure yet",
+          "label": "I\u2019m not sure yet",
           "declined": false,
           "exclusive": false
         }
@@ -1107,6 +1107,156 @@
           "label": "No strong preference",
           "declined": false,
           "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "financialStabilityImportance",
+      "version": 1,
+      "title": "How much does financial stability matter in a partner?",
+      "kind": "PREFERENCE",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Not important",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "A little",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Somewhat important",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Very important",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Essential",
+          "declined": false,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "id": "haveChildren",
+      "version": 1,
+      "title": "Do you have children?",
+      "kind": "SELF",
+      "target": null,
+      "sensitive": true,
+      "scoring": "INACTIVE",
+      "maximum": 1,
+      "options": [
+        {
+          "id": "o01",
+          "label": "No",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Yes \u2014 they live with me",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Yes \u2014 part of the time",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Yes \u2014 they don\u2019t live with me",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Prefer not to say",
+          "declined": true,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "id": "dealbreakers",
+      "version": 1,
+      "title": "What must match?",
+      "kind": "PREFERENCE",
+      "target": null,
+      "sensitive": false,
+      "scoring": "INACTIVE",
+      "maximum": 3,
+      "options": [
+        {
+          "id": "o01",
+          "label": "Same plans about children",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o02",
+          "label": "Smoke- and vape-free",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o03",
+          "label": "Alcohol-free",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o04",
+          "label": "Same faith",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o05",
+          "label": "Monogamous",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o06",
+          "label": "Pet-free home",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o07",
+          "label": "No children already",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o08",
+          "label": "Similar politics",
+          "declined": false,
+          "exclusive": false
+        },
+        {
+          "id": "o09",
+          "label": "None of these",
+          "declined": false,
+          "exclusive": true
         }
       ]
     }

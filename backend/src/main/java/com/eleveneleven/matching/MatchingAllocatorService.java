@@ -37,7 +37,7 @@ public class MatchingAllocatorService {
 
     @Transactional
     public RunSummary runOnce() {
-        var engine = new MatchingEngine(Policy.reciprocalV1());
+        var engine = new MatchingEngine(Policy.reciprocalV2());
         int events = 0, pairs = 0, candidates = 0;
         List<UUID> open = db.query(
                 "SELECT id FROM experience WHERE interest_open=TRUE AND starts_at>CURRENT_TIMESTAMP ORDER BY starts_at,id",
@@ -155,6 +155,8 @@ public class MatchingAllocatorService {
             case "o01" -> Set.of(Gender.MAN);
             case "o02" -> Set.of(Gender.WOMAN);
             case "o03" -> Set.of(Gender.MAN, Gender.WOMAN);
+            case "o04" -> Set.of(Gender.NON_BINARY);
+            case "o05" -> Set.of(Gender.MAN, Gender.WOMAN, Gender.NON_BINARY, Gender.OTHER);
             default -> Set.of();
         };
         boolean suspended = Boolean.TRUE.equals(

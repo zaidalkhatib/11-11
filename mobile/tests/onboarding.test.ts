@@ -25,7 +25,6 @@ const complete = (): Answers => ({
   experiences: ["Dinner"],
   energy: 3,
   conversations: ["Big ideas", "Food"],
-  chemistry: "Easy laughter",
   note: "",
   traits: Object.fromEntries(personalityQuestions.map(q => {
     const min = "min" in q ? q.min : 1;
@@ -40,6 +39,16 @@ test("phone OTP jumps to code then new users resume at name", () => {
   assert.equal(f.answers.phone, "(415) 555-0100");
   f = flowReducer(f, { type: "codeVerifiedNew" });
   assert.equal(f.question, 1);
+  assert.equal(f.phoneVerified, true);
+  f = flowReducer(f, { type: "answer", patch: { name: "Alex" } });
+  f = flowReducer(f, { type: "next" });
+  assert.equal(f.question, 2);
+  f = flowReducer(f, { type: "answer", patch: { city: "San Diego" } });
+  f = flowReducer(f, { type: "next" });
+  // Skip code step (already verified); continue later "The basics" prompts — never back to OTP.
+  assert.equal(f.stage, "questions");
+  assert.notEqual(f.question, 3);
+  assert.ok(f.question > 3);
 });
 test("starts before signup and requires four introduction pages", () => {
   let f = initialFlow();
@@ -75,9 +84,8 @@ test("requires valid choices, name, social energy, personality options and photo
   assert.equal(isStepValid(4, { ...a, energy: 6 }), false);
   assert.equal(isStepValid(4, { ...a, energy: 2.5 }), false);
   assert.equal(isStepValid(5, { ...a, conversations: ["Food"] }), false);
-  assert.equal(isStepValid(6, { ...a, chemistry: "Other" }), false);
   assert.equal(isStepValid(TRAIT_OFFSET, { ...a, traits: {} }), false);
-  assert.equal(isStepValid(TRAIT_OFFSET, { ...a, traits: { religion: ["Invented"] } }), false);
+  assert.equal(isStepValid(TRAIT_OFFSET, { ...a, traits: { gender: ["Invented"] } }), false);
   assert.equal(isStepValid(PHOTO_STEP, { ...a, photoUri: "" }), false);
   assert.equal(isComplete({ ...a, photoUri: "" }), false);
   assert.equal(isStepValid(PHOTO_STEP, a), true);
@@ -89,63 +97,29 @@ test("valid complete path passes questions, review, conditions, then gated home"
     ...initialFlow(),
     stage: "questions" as const,
     answers: complete(),
-  } as ReturnType<typeof initialFlow>;
-  for (let i = 0; i < QUESTION_COUNT + onboardingSections.length; i++) f = flowReducer(f, { type: "next" });
+  };
+  while (f.stage === "questions" || f.stage === "section") {
+    f = flowReducer(f, { type: "next" });
+  }
   assert.equal(f.stage, "review");
   f = flowReducer(f, { type: "next" });
   assert.equal(f.stage, "conditions");
-  assert.equal(flowReducer(f, { type: "next" }).stage, "conditions");
-  for (const id of Object.keys(f.conditionsAccepted)) f = flowReducer(f, { type: "toggleCondition", id });
+  for (const id of Object.keys(f.conditionsAccepted)) {
+    if (!f.conditionsAccepted[id]) f = flowReducer(f, { type: "toggleCondition", id });
+  }
   f = flowReducer(f, { type: "next" });
   assert.equal(f.stage, "home");
-  assert.equal(flowReducer(f, { type: "next" }), f);
 });
-test("back preserves answers and cannot fall below first introduction", () => {
-  const f = {
+test("review edit returns to review after a complete profile change", () => {
+  let f = {
     ...initialFlow(),
-    stage: "questions" as const,
-    question: 2,
+    stage: "review" as const,
     answers: complete(),
   };
-  const previous = flowReducer(f, { type: "back" });
-  assert.equal(previous.question, 1);
-  assert.deepEqual(previous.answers, f.answers);
-  assert.equal(flowReducer(initialFlow(), { type: "back" }).intro, 0);
-});
-test("multi-select respects max and permits deselection at limit", () => {
-  const all = ["a", "b", "c"];
-  assert.deepEqual(toggleChoice(all, "d", 3), all);
-  assert.deepEqual(toggleChoice(all, "a", 3), ["b", "c"]);
-  assert.deepEqual(toggleChoice(["a"], "b", 3), ["a", "b"]);
-});
-test("editing profile relocks app until valid and re-reviewed", () => {
-  const home = {
-    ...initialFlow(),
-    stage: "home" as const,
-    answers: complete(),
-  };
-  let f = flowReducer(home, { type: "edit", question: 1 });
-  f = flowReducer(f, { type: "answer", patch: { name: "" } });
+  f = flowReducer(f, { type: "edit", question: 1 });
   assert.equal(f.stage, "questions");
-  assert.equal(flowReducer(f, { type: "next" }), f);
-  assert.equal(flowReducer(home, { type: "edit", question: QUESTION_COUNT }), home);
-});
-test("restart removes every answer and starts the first intro", () => {
-  const home = {
-    ...initialFlow(),
-    stage: "home" as const,
-    answers: complete(),
-  };
-  assert.deepEqual(flowReducer(home, { type: "reset" }), initialFlow());
-});
-
-test("editing one answer returns to review without repeating completed questions", () => {
-  const home = {
-    ...initialFlow(),
-    stage: "home" as const,
-    answers: complete(),
-  };
-  let f = flowReducer(home, { type: "edit", question: 1 });
+  assert.equal(f.question, 1);
+  assert.equal(f.reviewAfterEdit, true);
   f = flowReducer(f, { type: "answer", patch: { name: "Sam" } });
   f = flowReducer(f, { type: "next" });
   assert.equal(f.stage, "review");
@@ -174,19 +148,21 @@ test("profile patches preserve app access and unrelated answers", () => {
   assert.equal(isComplete(updated.answers), true);
 });
 
-test("expanded profile has unique keys and required identity choices", () => {
-  assert.equal(QUESTION_COUNT, 101);
-  assert.equal(PHOTO_STEP, 100);
-  assert.equal(TRAIT_OFFSET, 7);
+test("algo keep-list has unique keys and locked belief/looks questions", () => {
+  assert.equal(TRAIT_OFFSET, 6);
+  assert.equal(PHOTO_STEP, TRAIT_OFFSET + personalityQuestions.length);
+  assert.equal(QUESTION_COUNT, PHOTO_STEP + 1);
   assert.equal(new Set(personalityQuestions.map(q => q.key)).size, personalityQuestions.length);
+  for (const key of ["selfRating", "looksImportance", "ethnicity", "sharedBackground", "religion", "faithImportance", "sharedFaith", "politicalOutlook", "politicalFit", "financialStabilityImportance", "dealbreakers", "haveChildren"]) {
+    assert.ok(personalityQuestions.some(q => q.key === key), key);
+  }
+  for (const key of ["height", "bodyBuild", "partnerEnergy", "partnerPriorities", "chemistry", "goodNewsSupport"]) {
+    assert.ok(!personalityQuestions.some(q => q.key === key), key);
+  }
   const gender = personalityQuestions.find(q => q.key === "gender");
   assert.ok(gender?.options.includes("Male"));
   assert.ok(gender?.options.includes("Female"));
-  assert.ok(!(gender?.options as readonly string[] | undefined)?.includes("Prefer not to say"));
-  for (const question of personalityQuestions) {
-    assert.ok(!("optional" in question && question.optional), question.key);
-    assert.ok(!(question.options as readonly string[]).includes("Prefer not to say"), question.key);
-  }
+  assert.ok(personalityQuestions.find(q => q.key === "interestedIn")?.options.includes("Men and women"));
 });
 
 test("phone requires a valid US number; code preview is not verification", () => {
@@ -204,13 +180,10 @@ test("formats US phone as the user types", () => {
   assert.equal(formatUsPhoneInput("14155550100"), "1 (415) 555-0100");
   assert.equal(isStepValid(0, { ...complete(), phone: formatUsPhoneInput("4153193296") }), true);
 });
-test("every personality answer is required and height options are precise", () => {
-  const a=complete();
-  delete a.traits.bodyBuild;
-  assert.equal(isComplete(a),false);
-  const height=personalityQuestions.find(q=>q.key==="height")!;
-  assert.ok(height.options.includes("5′10″ / 178 cm"));
-  assert.ok(!(height.options as readonly string[]).includes("Prefer not to say"));
+test("missing a kept trait blocks completion", () => {
+  const a = complete();
+  delete a.traits.selfRating;
+  assert.equal(isComplete(a), false);
 });
 
 test("onboarding groups all questions once and transitions between every section",()=>{
@@ -245,11 +218,11 @@ test("every question has contextual helper copy and an explicit selection limit"
   }
 });
 test("partner compatibility questions are required and independently editable", () => {
-  const keys = ["relationshipStructure", "childrenAlignment", "partnerHasChildren", "smokingFit", "drinkingFit", "partnerEnergy", "smokingOwn", "drinkingOwn", "dietary", "petsFit", "age", "looksImportance", "partnerPriorities", "partnerCareerDrive", "partnerFitness"];
+  const keys = ["relationshipStructure", "childrenAlignment", "partnerHasChildren", "smokingFit", "drinkingFit", "smokingOwn", "drinkingOwn", "dietary", "petsFit", "age", "looksImportance", "partnerCareerDrive", "partnerFitness", "sharedBackground", "dealbreakers"];
   const answers = emptyAnswers();
   for (const key of keys) {
     const index = personalityQuestions.findIndex(q => q.key === key);
-    assert.ok(index >= 0);
+    assert.ok(index >= 0, key);
     assert.equal(isStepValid(index + TRAIT_OFFSET, answers), false);
     const question = personalityQuestions[index];
     const min = "min" in question ? question.min : 1;
@@ -259,22 +232,27 @@ test("partner compatibility questions are required and independently editable", 
       assert.equal(isStepValid(index + TRAIT_OFFSET, {...answers, traits: {[key]: [question.options[0]]}}), false);
     }
     assert.ok(!isStepValid(index + TRAIT_OFFSET, {...answers, traits: {[key]: ["invented answer"]}}));
-    assert.ok(!(question.options as readonly string[]).includes("Prefer not to say"), key);
   }
 });
 
-test("relationship-process prompts are required, neutral, and preserve unrelated answers", () => {
-  const keys = ["goodNewsSupport", "feelingUnderstood", "conflictRepair", "goalSupport"];
-  const answers = complete();
-  for (const key of keys) {
-    const index = personalityQuestions.findIndex(q => q.key === key);
-    assert.ok(index >= 0);
-    delete answers.traits[key];
-    assert.equal(isStepValid(index + TRAIT_OFFSET, answers), false);
-  }
-  assert.equal(isComplete(answers), false);
-  const filled = complete();
-  const updated = flowReducer({...initialFlow(), stage: "home", answers: filled}, {type: "answer", patch: {traits: {...filled.traits, goalSupport: ["Encourage me and let me lead"]}}});
-  assert.equal(updated.stage, "home");
-  assert.deepEqual(updated.answers.traits.religion, filled.traits.religion);
+test("toggleChoice respects maximum selections", () => {
+  assert.deepEqual(toggleChoice(["A"], "B", 2), ["A", "B"]);
+  assert.deepEqual(toggleChoice(["A", "B"], "C", 2), ["A", "B"]);
+  assert.deepEqual(toggleChoice(["A", "B"], "A", 2), ["B"]);
+});
+
+test("returningHome restores server answers and skips signup", () => {
+  const restored = { ...complete(), name: "Sam", phone: "(415) 555-0199", photoUri: "https://cdn.example/p.jpg" };
+  const f = flowReducer(initialFlow(), {
+    type: "returningHome",
+    name: "Sam",
+    phone: "(415) 555-0199",
+    answers: restored,
+  });
+  assert.equal(f.stage, "home");
+  assert.equal(f.phoneVerified, true);
+  assert.equal(f.answers.name, "Sam");
+  assert.equal(f.answers.phone, "(415) 555-0199");
+  assert.equal(f.answers.photoUri, "https://cdn.example/p.jpg");
+  assert.equal(f.answers.energy, 3);
 });

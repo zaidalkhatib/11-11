@@ -8,7 +8,13 @@ export type Question = {
   options: { id: string; label: string; declined: boolean; exclusive: boolean }[];
 };
 export type Catalog = { version: string; revision?: string | null; questions: Question[] };
-export type Profile = { displayName: string; dateOfBirth: string | null; version: number; identityVerified: boolean };
+export type Profile = {
+  displayName: string;
+  dateOfBirth: string | null;
+  version: number;
+  identityVerified: boolean;
+  photoUrl?: string | null;
+};
 export type Event = { id: string; title: string; cityCode: string; neighborhood: string; timeZone: string | null; startsAt: string; endsAt: string };
 export type Disclosure = { eventId: string; neighborhood: string; startsAt: string; timeZone: string | null; state: 'HIDDEN' | 'REVEALED'; venueName: string | null; venueAddress: string | null; partnerName: string | null };
 export type Invitation = {
@@ -141,7 +147,15 @@ export function createClient(
     questionnaire: () => request<Catalog>('/questionnaire'),
     events: () => request<Event[]>('/events'),
     profile: () => request<Profile>('/me/profile'),
-    saveProfile: (body: { displayName: string; dateOfBirth: string | null; expectedVersion: number | null }) => request<Profile>('/me/profile', 'PUT', body),
+    saveProfile: (body: {
+      displayName: string;
+      dateOfBirth: string | null;
+      expectedVersion: number | null;
+      photoUrl?: string | null;
+    }) => request<Profile>('/me/profile', 'PUT', body),
+    deleteAccount: () => request<{ state: 'ACCOUNT_DELETED' }>('/me/account', 'DELETE'),
+    savePushToken: (body: { token: string; platform: string }) =>
+      request<{ state: 'PUSH_TOKEN_SAVED' }>('/me/push-token', 'PUT', body),
     answers: () => request<AnswersSnapshot>('/me/answers'),
     saveAnswer: (id: string, answer: Answer, revision: string) => request<AnswerAcknowledgement>(`/me/answers/${encodeURIComponent(id)}`, 'PUT', answer, precondition(revision)),
     deleteAnswer: (id: string, revision: string) => request<AnswerAcknowledgement>(`/me/answers/${encodeURIComponent(id)}`, 'DELETE', undefined, precondition(revision)),

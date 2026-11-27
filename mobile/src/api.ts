@@ -16,12 +16,15 @@ import {
   selectScheduledEvent,
   type Client,
 } from "./contracts/preview-adapter";
-import { clearAuthSession, getAuthIdToken, refreshAuthIdToken } from "./auth";
+import { clearAuthSession, deleteFirebaseAccount, getAuthIdToken, refreshAuthIdToken } from "./auth";
 import { isFirebaseConfigured } from "./firebase";
 import { isValidUsPhone, type Answers } from "./onboarding";
+import { hydrateAnswersFromServer, provisionalDobFromAge } from "./answers-hydrate.ts";
+import { Platform } from "react-native";
 
 export type { Event, Client, Invitation };
 export { failure, prepareAnswers, prepareProfile, savePreparedAnswers, saveProfile, selectScheduledEvent, runLocalDevMatcher };
+export { hydrateAnswersFromServer, provisionalDobFromAge };
 
 const DEFAULT_BASE = "http://127.0.0.1:8080";
 
@@ -86,13 +89,16 @@ export function clearSession(): void {
   clearAuthSession();
 }
 
-/** Provisional DOB from age trait — adult check only, not identity verification. */
-export function provisionalDobFromAge(ageLabel: string | undefined): string | null {
-  if (!ageLabel) return null;
-  const age = Number(ageLabel);
-  if (!Number.isInteger(age) || age < 18 || age > 120) return null;
-  const year = new Date().getFullYear() - age;
-  return `${year}-01-01`;
+/** Erase Railway profile/answers (if any), then delete the Firebase Auth user. */
+export async function deleteAccount(): Promise<void> {
+  // Server wipe first while the bearer token is still valid.
+  if (getAuthIdToken() || (await refreshAuthIdToken()) || accessToken) {
+    const api = await ensureSession();
+    await api.deleteAccount();
+  }
+  await deleteFirebaseAccount();
+  accessToken = null;
+  client = null;
 }
 
 export function previewFromAnswers(answers: Answers) {
@@ -100,9 +106,15 @@ export function previewFromAnswers(answers: Answers) {
     name: answers.name,
     energy: answers.energy,
     conversations: answers.conversations,
-    chemistry: answers.chemistry,
+    chemistry: "",
     traits: answers.traits,
   };
+}
+
+function remotePhotoUrl(answers: Answers): string | null {
+  const uri = answers.photoUri.trim();
+  if (uri.startsWith("https://") || uri.startsWith("http://")) return uri;
+  return null;
 }
 
 export async function createProfileAndAnswers(answers: Answers) {
@@ -118,7 +130,12 @@ export async function createProfileAndAnswers(answers: Answers) {
   } catch (error) {
     if (!(error instanceof ApiError) || error.status !== 404) return failure(error);
   }
-  const profileUpdate = prepareProfile(previewFromAnswers(answers), dob, expectedVersion);
+  const profileUpdate = prepareProfile(
+    previewFromAnswers(answers),
+    dob,
+    expectedVersion,
+    remotePhotoUrl(answers),
+  );
   const saved = await saveProfile(api, profileUpdate);
   if (saved.state !== "acknowledged") return saved;
   const snapshot = await api.answers();
@@ -126,6 +143,20 @@ export async function createProfileAndAnswers(answers: Answers) {
   const plan = prepareAnswers(catalog, previewFromAnswers(answers), consented);
   const batch = await savePreparedAnswers(api, plan, snapshot);
   return batch;
+}
+
+/** Persist You-tab edits to the same profile + answers endpoints. */
+export async function updateProfileAndAnswers(answers: Answers) {
+  return createProfileAndAnswers(answers);
+}
+
+export async function registerPushToken(token: string): Promise<void> {
+  if (!token.trim()) return;
+  const api = await ensureSession();
+  await api.savePushToken({
+    token: token.trim(),
+    platform: Platform.OS === "ios" ? "ios" : Platform.OS === "android" ? "android" : "web",
+  });
 }
 
 export async function fetchDinnerEvents(): Promise<Event[]> {
@@ -160,8 +191,10 @@ export async function triggerMatcher(): Promise<{ pairsCreated: number }> {
   return runLocalDevMatcher(apiBaseUrl());
 }
 
-/** After Firebase sign-in (or local-dev), load profile if it already exists. */
-export async function tryReturningLogin(phone: string): Promise<{ name: string } | null> {
+/** After Firebase sign-in (or local-dev), load profile + answers if they already exist. */
+export async function tryReturningLogin(
+  phone: string,
+): Promise<{ name: string; answers: Answers } | null> {
   if (!isValidUsPhone(phone)) return null;
   const digits = phone.replace(/\D/g, "");
   const national = digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
@@ -171,7 +204,9 @@ export async function tryReturningLogin(phone: string): Promise<{ name: string }
       : await ensureSession(`mobile-${national}`);
     const profile = await api.profile();
     if (!profile?.displayName?.trim()) return null;
-    return { name: profile.displayName.trim() };
+    const [catalog, snapshot] = await Promise.all([api.questionnaire(), api.answers()]);
+    const answers = hydrateAnswersFromServer(catalog, profile, snapshot, phone);
+    return { name: profile.displayName.trim(), answers };
   } catch {
     return null;
   }

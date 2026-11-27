@@ -243,6 +243,16 @@ At the 2026-10-24 organization baseline, no product, technology, commercial, or 
 - Related questions and workstreams: Q-04–Q-07, Q-05; Engineering, Growth & Experiences.
 - Dependencies and follow-up: remove offline fake-match path; Expo push token + backend outbox/dispatcher; Firebase phone auth + Railway Postgres (separate). Builds on D-025 / D-026.
 
+### D-029 — Algo-aligned questionnaire cut (looks / faith / ethnicity kept)
+
+- Status: Approved, 2026-11-26.
+- Decision: Cut unused onboarding fluff; keep current 11:11 question voice on remaining items. Explicitly keep and score looks self-rating + importance, ethnicity + shared-background preference, religion + faith importance + shared faith, politics + fit, activity/fitness prefs, and financial-stability importance. Live allocator uses MatchingEngine policy `reciprocal-v2`. TIPI/attachment swap and post-date learning deferred.
+- Source and approver: user, questionnaire review thread: implement cut; “don’t cut the looks rating and ethnic background… religion and how much religion matter”; “keep our branding in the questioning same as current questions.”
+- Rationale: Most catalog items were inactive; match on dealbreakers/logistics/soft fit that the product actually uses, without dropping user-locked appearance and belief dimensions.
+- Related questions and workstreams: Q-03–Q-05; Engineering, Design, QA & Safety.
+- Dependencies and follow-up: dealbreaker hard-filter enforcement beyond soft prefs; Prefer-not-to-say / non-binary interest catalog options; TIPI later.
+- Builds on D-022 / D-025 / D-028.
+
 ## New-entry template
 
 ### D-XXX — Short title

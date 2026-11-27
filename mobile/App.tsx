@@ -38,7 +38,6 @@ import {
   Flow,
   personalityQuestions,
   questionHelper,
-  chemistryOptions,
   conversations,
   flowReducer,
   initialFlow,
@@ -70,15 +69,19 @@ import {
 import {
   clearSession,
   createProfileAndAnswers,
+  deleteAccount,
   ensureFirebaseSession,
   fetchDinnerEvents,
   fetchInvitations,
   leaveEvent,
   triggerMatcher,
   tryReturningLogin,
+  updateProfileAndAnswers,
 } from "./src/api";
-import { confirmPhoneCode, sendPhoneCode } from "./src/auth";
+import { authErrorMessage, confirmPhoneCode, sendPhoneCode } from "./src/auth";
 import { getFirebaseWebConfig, isFirebaseConfigured } from "./src/firebase";
+import { uploadProfilePhoto } from "./src/photo";
+import { registerDevicePushToken } from "./src/push";
 import { FirebaseRecaptchaVerifierModal } from "expo-firebase-recaptcha";
 
 type InviteEntranceState = { itineraryId: string; title: string; meta: string };
@@ -203,7 +206,6 @@ const questions = [
   { label: "CONFIRMATION", title: "Enter the code we sent.", helper: "Use the 6-digit code from your text. Test numbers use the code you set in Firebase." },
   { label: "YOUR SOCIAL RHYTHM", title: "Around someone new, you tend to…", helper: "Think about your natural rhythm before you feel completely at ease." },
   { label: "THE GOOD CONVERSATIONS", title: "What makes you lose track of time?", helper: "The topics you could happily talk about for hours. Pick two or three." },
-  { label: "A LITTLE CHEMISTRY", title: "What draws you closer?", helper: "Think about the feeling that makes you want a second date." },
 ];
 const energyLabels = [
   "Introvert",
@@ -605,7 +607,6 @@ function Questionnaire({
       {index===3&&<><TextInput accessibilityLabel="Confirmation code" value={code} onChangeText={value=>onCodeChange(value.replace(/\D/g,""))} placeholder="123456" placeholderTextColor={color.muted} keyboardType="number-pad" autoComplete="one-time-code" textContentType="oneTimeCode" style={[s.nameInput,{letterSpacing:8}]} maxLength={6}/>{authError ? <Text style={[s.inputNote, { color: color.accent }]}>{authError}</Text> : null}</>}
       {index===4&&energyLabels.map((v,i)=><Choice key={v} label={v} role="radio" selected={answers.energy===i+1} onPress={()=>patch({energy:i+1})}/>)}
       {index===5&&conversations.map(v=><Choice key={v} label={v} selected={answers.conversations.includes(v)} onPress={()=>patch({conversations:toggleChoice(answers.conversations,v,3)})}/>)}
-      {index===6&&chemistryOptions.map(v=><Choice key={v} label={v} role="radio" selected={answers.chemistry===v} onPress={()=>patch({chemistry:v})}/>)}
       {index===PHOTO_STEP&&<View style={s.photoStep}>
         <Pressable accessibilityRole="button" accessibilityLabel={answers.photoUri ? "Change your photo" : "Add your photo"} disabled={picking} onPress={choosePhoto} style={[s.profilePhoto, answers.photoUri ? s.profilePhotoFilled : null]}>
           {answers.photoUri ? <Image source={{ uri: answers.photoUri }} style={s.profileImage} /> : <Text style={s.photoPlaceholder}>＋</Text>}
@@ -639,7 +640,6 @@ function answerRows(answers: Answers) {
     { section: "The basics", label: "City", value: answers.city || "Not answered yet", index: 2 },
     { section: "Personality", label: "Social energy", value: energyLabels[(answers.energy ?? 3) - 1], index: 4 },
     { section: "Personality", label: "Conversation", value: answers.conversations.join(" · "), index: 5 },
-    { section: "Love & connection", label: "Chemistry", value: answers.chemistry, index: 6 },
     ...personalityQuestions.map((q, i) => ({ section: q.section, label: q.title, value: (answers.traits?.[q.key] ?? []).join(" · ") || "Not answered yet", index: i + TRAIT_OFFSET })),
     { section: "Love & connection", label: "Photo", value: answers.photoUri ? "Added" : "Required", index: PHOTO_STEP },
   ];
@@ -674,6 +674,7 @@ function ProfileEditor({ answers, patch }: { answers: Answers; patch: (patch: Pa
   const [draft, setDraft] = useState(answers);
   const [photoError, setPhotoError] = useState("");
   const [picking, setPicking] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
   const choosePhoto = async () => {
     if (picking) return;
     setPicking(true); setPhotoError("");
@@ -748,7 +749,6 @@ function ProfileEditor({ answers, patch }: { answers: Answers; patch: (patch: Pa
                   {editing === 2 && cityOptions.map(city => <Choice key={city} label={city} role="radio" selected={draft.city === city} onPress={() => setDraft({ ...draft, city })} />)}
                   {editing === 4 && energyLabels.map((v, i) => <Choice key={v} label={v} role="radio" selected={draft.energy === i + 1} onPress={() => setDraft({ ...draft, energy: i + 1 })} />)}
                   {editing === 5 && <><Text style={s.helper}>The topics you could happily talk about for hours. Pick two or three.</Text>{conversations.map(v => <Choice key={v} label={v} selected={draft.conversations.includes(v)} onPress={() => setDraft({ ...draft, conversations: toggleChoice(draft.conversations, v, 3) })} />)}</>}
-                  {editing === 6 && chemistryOptions.map(v => <Choice key={v} label={v} role="radio" selected={draft.chemistry === v} onPress={() => setDraft({ ...draft, chemistry: v })} />)}
                   {editing === PHOTO_STEP && <View style={s.photoStep}>
                     <Pressable accessibilityRole="button" accessibilityLabel="Choose your photo" disabled={picking} onPress={editPhoto} style={[s.profilePhoto, draft.photoUri ? s.profilePhotoFilled : null]}>
                       {draft.photoUri ? <Image source={{ uri: draft.photoUri }} style={s.profileImage} /> : <Text style={s.photoPlaceholder}>＋</Text>}
@@ -762,7 +762,34 @@ function ProfileEditor({ answers, patch }: { answers: Answers; patch: (patch: Pa
                 </View>
               </ScrollView>
               <View style={s.questionBottom}>
-                <Button label="Save changes" disabled={!isStepValid(editing, draft)} onPress={() => { patch(draft); setEditing(null); }} />
+                <Button
+                  label={savingEdit ? "Saving…" : "Save changes"}
+                  disabled={!isStepValid(editing, draft) || savingEdit}
+                  onPress={() => {
+                    if (savingEdit || editing === null) return;
+                    setSavingEdit(true);
+                    void (async () => {
+                      try {
+                        let next = draft;
+                        if (draft.photoUri && !draft.photoUri.startsWith("http")) {
+                          const url = await uploadProfilePhoto(draft.photoUri).catch(() => null);
+                          if (url) next = { ...draft, photoUri: url };
+                        }
+                        const result = await updateProfileAndAnswers(next);
+                        if (result.state !== "acknowledged") {
+                          Alert.alert("Couldn’t save", "Check your connection and try again.");
+                          return;
+                        }
+                        patch(next);
+                        setEditing(null);
+                      } catch {
+                        Alert.alert("Couldn’t save", "Check your connection and try again.");
+                      } finally {
+                        setSavingEdit(false);
+                      }
+                    })();
+                  }}
+                />
               </View>
             </>
           )}
@@ -817,6 +844,7 @@ function Conditions({
   back,
   reduce,
   answers,
+  patch,
 }: {
   accepted: Record<string, boolean>;
   toggle: (id: string) => void;
@@ -824,6 +852,7 @@ function Conditions({
   back: () => void;
   reduce: boolean;
   answers: Answers;
+  patch: (patch: Partial<Answers>) => void;
 }) {
   const [docId, setDocId] = useState<ConditionDocId | null>(null);
   const [saving, setSaving] = useState(false);
@@ -835,8 +864,17 @@ function Conditions({
     setSaving(true);
     setSaveError(null);
     try {
-      const result = await createProfileAndAnswers(answers);
+      let payload = answers;
+      if (answers.photoUri && !answers.photoUri.startsWith("http")) {
+        const url = await uploadProfilePhoto(answers.photoUri).catch(() => null);
+        if (url) {
+          payload = { ...answers, photoUri: url };
+          patch({ photoUri: url });
+        }
+      }
+      const result = await createProfileAndAnswers(payload);
       if (result.state === "acknowledged") {
+        void registerDevicePushToken();
         next();
         return;
       }
@@ -983,6 +1021,7 @@ function Home({ answers, reduce }: { answers: Answers; reduce: boolean }) {
   const [itineraries, setItineraries] = useState<DinnerItinerary[]>([]);
   const [apiReady, setApiReady] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const plansRef = useRef(plans);
   plansRef.current = plans;
   const apiReadyRef = useRef(apiReady);
@@ -1213,11 +1252,12 @@ function Home({ answers, reduce }: { answers: Answers; reduce: boolean }) {
         <View style={s.brandConfirmCard} accessibilityViewIsModal>
           <Text style={s.brandConfirmTitle}>Delete account?</Text>
           <Text style={s.brandConfirmBody}>
-            This clears your answers, photo, and preview dates from this session.
+            This permanently deletes your profile, answers, and phone sign-in. You can’t undo it.
           </Text>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Keep my account"
+            disabled={deletingAccount}
             onPress={() => setConfirmDelete(false)}
             style={s.brandConfirmPrimary}
           >
@@ -1226,18 +1266,35 @@ function Home({ answers, reduce }: { answers: Answers; reduce: boolean }) {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Delete account"
+            disabled={deletingAccount}
             onPress={() => {
-              setConfirmDelete(false);
-              clearSession();
-              setOpenedInviteId(null);
-              setInviteEntrance(null);
-              dispatch({ type: "reset" });
-              planDispatch({ type: "reset" });
-              router.replace("/");
+              if (deletingAccount) return;
+              setDeletingAccount(true);
+              void (async () => {
+                try {
+                  await deleteAccount();
+                  setConfirmDelete(false);
+                  clearSession();
+                  setOpenedInviteId(null);
+                  setInviteEntrance(null);
+                  dispatch({ type: "reset" });
+                  planDispatch({ type: "reset" });
+                  router.replace("/");
+                } catch {
+                  Alert.alert(
+                    "Couldn’t delete account",
+                    "Check your connection and try again. If this keeps happening, sign in once more, then delete.",
+                  );
+                } finally {
+                  setDeletingAccount(false);
+                }
+              })();
             }}
             style={s.brandConfirmSecondary}
           >
-            <Text style={s.brandConfirmSecondaryText}>Delete account</Text>
+            <Text style={s.brandConfirmSecondaryText}>
+              {deletingAccount ? "Deleting…" : "Delete account"}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -1298,9 +1355,8 @@ export default function AppContent() {
       void (async () => {
         try {
           if (isFirebaseConfigured()) {
-            const verifier = recaptchaRef.current;
-            if (!verifier) throw new Error("RECAPTCHA_MISSING");
-            await sendPhoneCode(phone, verifier);
+            // Prefer modal verifier when present; auth.ts falls back for Expo Go test numbers.
+            await sendPhoneCode(phone, recaptchaRef.current ?? undefined);
             setOtpCode("");
             dispatch({ type: "awaitCode", phone });
             return;
@@ -1310,13 +1366,10 @@ export default function AppContent() {
           if (known) dispatch({ type: "phoneKnown", name: known.name, phone });
           else dispatch({ type: "next" });
         } catch (error) {
-          const message = error instanceof Error ? error.message : "Couldn’t send code";
-          setAuthError(
-            message.includes("too-many-requests")
-              ? "Too many attempts. Wait a bit and try again."
-              : "Couldn’t send a code. Check the number and try again.",
-          );
-          Alert.alert("Code not sent", "Check your number and try again.");
+          const message = authErrorMessage(error);
+          setAuthError(message);
+          console.warn("sendPhoneCode failed", error);
+          Alert.alert("Code not sent", message);
         } finally {
           setSigningIn(false);
         }
@@ -1336,7 +1389,13 @@ export default function AppContent() {
           }
           const known = await tryReturningLogin(phone);
           if (known) {
-            dispatch({ type: "returningHome", name: known.name, phone });
+            dispatch({
+              type: "returningHome",
+              name: known.name,
+              phone,
+              answers: known.answers,
+            });
+            void registerDevicePushToken();
             return;
           }
           dispatch({ type: "codeVerifiedNew" });
@@ -1445,6 +1504,7 @@ export default function AppContent() {
                 back={back}
                 reduce={reduce}
                 answers={flow.answers}
+                patch={(p) => dispatch({ type: "answer", patch: p })}
               />
             )}
             {showHome && (

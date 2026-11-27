@@ -4,7 +4,7 @@ import type { AnswersSnapshot, Catalog, Event, Profile, createClient } from './c
 /** Structural subset of current mobile Answers. No native APIs or implicit I/O. */
 export type PreviewAnswers = {
   name: string; energy: number | null; conversations: string[];
-  chemistry: string; traits: Record<string, string[]>;
+  chemistry?: string; traits: Record<string, string[]>;
 };
 export type Client = ReturnType<typeof createClient>;
 export function prepareAnswers(catalog: Catalog, preview: PreviewAnswers, consentedQuestionIds: ReadonlySet<string> = new Set()) {
@@ -21,8 +21,13 @@ export function prepareAnswers(catalog: Catalog, preview: PreviewAnswers, consen
   };
 }
 /** DOB is separately supplied, never inferred from a preview code or completed onboarding. */
-export function prepareProfile(preview: PreviewAnswers, dateOfBirth: string | null, expectedVersion: number | null) {
-  return { displayName: preview.name.trim(), dateOfBirth, expectedVersion };
+export function prepareProfile(
+  preview: PreviewAnswers,
+  dateOfBirth: string | null,
+  expectedVersion: number | null,
+  photoUrl: string | null = null,
+) {
+  return { displayName: preview.name.trim(), dateOfBirth, expectedVersion, photoUrl };
 }
 /** A preview type (Dinner etc.) can never become an event selection. */
 export function selectScheduledEvent(events: Event[], explicitEventId: string): Event {

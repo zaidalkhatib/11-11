@@ -61,6 +61,37 @@ class IntegrationTest {
         mvc.perform(put("/api/v1/me/answers/music").with(auth("alice")).header("If-Match",AnswerVersions.etag(profiles.snapshot(a).revision())).contentType("application/json").content("{\"version\":1,\"status\":\"ANSWERED\",\"choices\":[\"o01\"],\"sensitiveConsent\":false}")).andExpect(status().isOk());
         assertThat(profiles.answers(b)).isEmpty();assertThat(profiles.answers(a)).containsKey("music");
     }
+    @Test void accountDeleteErasesProfileAnswersAndIsIdempotent() throws Exception {
+        answer(a,"music",new Catalog.Answer(1,"ANSWERED",List.of("o01"),false));
+        interests.join(a,event);
+        mvc.perform(put("/api/v1/me/push-token").with(auth("alice")).contentType("application/json")
+                        .content("{\"token\":\"ExponentPushToken[test]\",\"platform\":\"ios\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.state").value("PUSH_TOKEN_SAVED"));
+        mvc.perform(delete("/api/v1/me/account").with(auth("alice")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.state").value("ACCOUNT_DELETED"));
+        assertThatThrownBy(()->profiles.get(a)).isInstanceOf(ApiException.class);
+        assertThat(db.queryForObject("SELECT COUNT(*) FROM answer WHERE owner_id=?",Integer.class,a)).isZero();
+        assertThat(db.queryForObject("SELECT COUNT(*) FROM event_interest WHERE owner_id=?",Integer.class,a)).isZero();
+        assertThat(db.queryForObject("SELECT COUNT(*) FROM push_token WHERE owner_id=?",Integer.class,a)).isZero();
+        mvc.perform(delete("/api/v1/me/account").with(auth("alice")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.state").value("ACCOUNT_DELETED"));
+        assertThat(profiles.get(b).displayName()).isEqualTo("Synthetic B");
+    }
+    @Test void profilePhotoUrlPersistsOnCreateAndUpdate() throws Exception {
+        mvc.perform(delete("/api/v1/me/account").with(auth("alice"))).andExpect(status().isOk());
+        mvc.perform(put("/api/v1/me/profile").with(auth("alice")).contentType("application/json")
+                        .content("{\"displayName\":\"Photo A\",\"dateOfBirth\":\"1995-01-01\",\"expectedVersion\":null,\"photoUrl\":\"https://cdn.example/a.jpg\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.photoUrl").value("https://cdn.example/a.jpg"));
+        long version = profiles.get(a).version();
+        mvc.perform(put("/api/v1/me/profile").with(auth("alice")).contentType("application/json")
+                        .content("{\"displayName\":\"Photo A\",\"dateOfBirth\":\"1995-01-01\",\"expectedVersion\":"+version+",\"photoUrl\":\"https://cdn.example/b.jpg\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.photoUrl").value("https://cdn.example/b.jpg"));
+    }
     @Test void invalidDuplicateExclusiveAndSensitiveAnswersAreRejected() {
         for(var answer:List.of(new Catalog.Answer(1,"ANSWERED",List.of("o01","o01"),false),new Catalog.Answer(1,"ANSWERED",List.of("o01","o12"),false),new Catalog.Answer(2,"ANSWERED",List.of("o01"),false),new Catalog.Answer(1,"ANSWERED",List.of("bad"),false)))
             assertThatThrownBy(()->answer(a,"music",answer)).isInstanceOf(ApiException.class);
@@ -259,6 +290,6 @@ class IntegrationTest {
     }
     @Test void mockIdentityCannotBecomeVerifiedOrPairable() throws Exception {
         mvc.perform(get("/api/v1/me/readiness").with(auth("alice"))).andExpect(jsonPath("$.canPair").value(false));
-        assertThat(catalog.definition().questions()).hasSize(97);
+        assertThat(catalog.definition().questions()).hasSize(100);
     }
 }

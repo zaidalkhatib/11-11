@@ -175,4 +175,49 @@ class MatchingTest {
         assertThat(worse.compatibility()).isNotNull();
         assertThat(better.compatibility()).isGreaterThan(worse.compatibility());
     }
+    @Test void reciprocalV2ScoresFaithEthnicityPoliticsAndLooks() {
+        var reciprocal=new MatchingEngine(Policy.reciprocalV2());
+        var aligned=new HashMap<String,Answer>();
+        aligned.put("music",answer("o01")); aligned.put("movies",answer("o01")); aligned.put("conversations",answer("o01"));
+        aligned.put("pace",answer("o01")); aligned.put("communication",answer("o01"));
+        aligned.put("relationship",answer("o02")); aligned.put("relationshipStructure",answer("o01"));
+        aligned.put("selfRating",answer("o07")); aligned.put("looksImportance",answer("o03"));
+        aligned.put("religion",answer("o01")); aligned.put("faithImportance",answer("o04"));
+        aligned.put("sharedFaith",answer("o03"));
+        aligned.put("ethnicity",answer("o01")); aligned.put("sharedBackground",answer("o03"));
+        aligned.put("politicalOutlook",answer("o02")); aligned.put("politicalFit",answer("o01"));
+        aligned.put("careerDrive",answer("o02")); aligned.put("financialStabilityImportance",answer("o04"));
+        var mismatch=new HashMap<>(aligned);
+        mismatch.put("religion",answer("o02"));
+        mismatch.put("ethnicity",answer("o07"));
+        mismatch.put("politicalOutlook",answer("o05"));
+        mismatch.put("selfRating",answer("o03"));
+        var left=person("a",aligned);
+        var close=person("b",aligned);
+        var far=person("c",mismatch);
+        var better=reciprocal.evaluate(left,close,new Context(clock,false,true,false));
+        var worse=reciprocal.evaluate(left,far,new Context(clock,false,true,false));
+        assertThat(better.policyVersion()).isEqualTo("reciprocal-v2");
+        assertThat(better.compatibility()).isNotNull();
+        assertThat(worse.compatibility()).isNotNull();
+        assertThat(better.compatibility()).isGreaterThan(worse.compatibility());
+    }
+    Candidate personWithFacts(String id, Map<String,Answer> answers, Map<String,String> facts) {
+        var fixture=new HashMap<>(answers);
+        fixture.putIfAbsent("relationship",answer("o02"));fixture.putIfAbsent("relationshipStructure",answer("o01"));
+        return new Candidate(id,LocalDate.of(1995,1,1),true,false,Gender.NON_BINARY,Set.of(Gender.NON_BINARY),true,fixture,facts);
+    }
+    @Test void dealbreakerSmokeFreeFailsWhenPartnerSmokes() {
+        var seeker=personWithFacts("a", Map.of("dealbreakers", answer("o02")), Map.of());
+        var smoker=personWithFacts("b", Map.of(), Map.of("smoking","OCCASIONAL"));
+        var clean=personWithFacts("c", Map.of(), Map.of("smoking","NONE"));
+        assertThat(evaluate(seeker, smoker).eligibility()).isEqualTo(Gate.FAIL);
+        assertThat(evaluate(seeker, smoker).reasons()).contains("DEALBREAKER_SMOKE_FREE");
+        assertThat(evaluate(seeker, clean).reasons()).doesNotContain("DEALBREAKER_SMOKE_FREE");
+    }
+    @Test void dealbreakerNoneSkipsHardFilters() {
+        var seeker=personWithFacts("a", Map.of("dealbreakers", answer("o09")), Map.of());
+        var smoker=personWithFacts("b", Map.of(), Map.of("smoking","REGULAR"));
+        assertThat(evaluate(seeker, smoker).reasons()).doesNotContain("DEALBREAKER_SMOKE_FREE");
+    }
 }

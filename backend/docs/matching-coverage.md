@@ -2,7 +2,9 @@
 
 Audit against current `mobile/src/onboarding.ts`, `mobile/App.tsx` energy labels, frozen catalog and `MatchingEngine`. There are **85 catalog answer definitions**, covering 88 UI steps after the three identity preview steps are excluded. Five catalog items disable answered collection; a large catalog is not evidence of a sophisticated or validated matching algorithm.
 
-Current policy is **exploratory-v3**. It uses **four soft-fit dimensions from five question IDs**, plus separate implemented eligibility gates and two narrow relationship-assessment facets. Coverage returned by the engine is coverage of those four soft dimensions, **not a percentage of the 85 questions or all relationship needs**. A 100 score means only maximal agreement under the observed exploratory rules; it predicts neither chemistry nor overall compatibility.
+Live allocator policy is **reciprocal-v2** (looks, career, fitness, age, finance; faith/ethnicity/politics soft fit; shared interests; thin personality; dinner logistics). **exploratory-v3** remains available for research fixtures. Coverage is of the active policy’s soft dimensions, **not** a percentage of the full catalog. A 100 score means maximal agreement under those rules only — not chemistry.
+
+Mobile onboarding (D-029) is trimmed to the algo keep-list; looks / ethnicity / religion (and how much each matters) stay required and scored.
 
 ## Implemented layers
 

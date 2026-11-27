@@ -11,6 +11,8 @@ class CatalogEvolutionTest {
     private final List<String> mobileGapAdditions=List.of(
             "age","careerDrive","partnerAgeRange","partnerPriorities","partnerHasChildren","fitnessLevel",
             "partnerFitness","partnerCareerDrive","smokingOwn","drinkingOwn","dietary","petsFit");
+    private final List<String> algoCutAdditions=List.of(
+            "financialStabilityImportance","haveChildren","dealbreakers");
     @Test void originalSnapshotIsByteForByteStableAndNewRevisionIsAdditive() throws Exception {
         try(var input=new ClassPathResource("questionnaire-v1.json").getInputStream()) {
             assertThat(HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(input.readAllBytes())))
@@ -18,10 +20,11 @@ class CatalogEvolutionTest {
         }
         var definition=new Catalog().definition();
         assertThat(definition.version()).isEqualTo("onboarding-v1");
-        assertThat(definition.revision()).isEqualTo("onboarding-v1.6");
-        assertThat(definition.questions()).hasSize(97);
+        assertThat(definition.revision()).isEqualTo("onboarding-v1.7");
+        assertThat(definition.questions()).hasSize(100);
         assertThat(definition.questions().subList(81,85).stream().map(Catalog.Question::id)).containsExactlyElementsOf(additions);
         assertThat(definition.questions().subList(85,97).stream().map(Catalog.Question::id)).containsExactlyElementsOf(mobileGapAdditions);
+        assertThat(definition.questions().subList(97,100).stream().map(Catalog.Question::id)).containsExactlyElementsOf(algoCutAdditions);
     }
     @Test void everyNewChoiceDeclineAndInvalidSelectionHasExplicitSemantics() throws Exception {
         var catalog=new Catalog();
